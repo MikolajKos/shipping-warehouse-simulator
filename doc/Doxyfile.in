@@ -1,0 +1,21 @@
+# Configuration
+PROJECT_NAME           = "@CMAKE_PROJECT_NAME@"
+PROJECT_NUMBER         = 1.0
+OUTPUT_DIRECTORY       = "@CMAKE_CURRENT_BINARY_DIR@/doc_output"
+INPUT                  = "@CMAKE_SOURCE_DIR@/src"
+RECURSIVE              = YES
+FILE_PATTERNS          = *.c *.h
+
+# Generator options
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+GENERATE_LATEX         = NO
+GENERATE_MAN           = NO
+GENERATE_RTF           = NO
+GENERATE_HTML          = YES
+
+# Design options
+HTML_TIMESTAMP         = YES
+USE_MATHJAX            = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES
