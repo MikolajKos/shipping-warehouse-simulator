@@ -22,9 +22,9 @@ if (DOXYGEN_FOUND)
         COMMENT "Generating API documentation with Doxygen..."
         VERBATIM)
 
-       message(STATUS "Doxygen found. Use 'make doc' to generate documentation.")
+	message(STATUS "Doxygen found. Use 'make doc' to generate documentation.")
 else()
-    message(WARNING "Doxygen not found. Documentation target 'doc' will not be available.")
+	message(WARNING "Doxygen not found. Documentation target 'doc' will not be available.")
 endif()
 
 add_subdirectory(src)
