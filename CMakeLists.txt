@@ -1,8 +1,21 @@
 cmake_minimum_required(VERSION 3.25)
-project(ShippingWarehouse C)
+project(ShippingWarehouse C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_XOPEN_SOURCE=700 -Wall -Wextra -pthread")
+
+set(CMAKE_CXX_STANDARD 14) # Required by GTest
+
+# --- Installing GoogleTest ---
+include(FetchContent)
+FetchContent_Declare(
+	googletest
+	URL https://github.com/google/googletest/archive/refs/tags/v1.16.0.zip
+)
+
+# --- Avoids installing GTest within system ---
+set(INSTALL_GTEST OFF)
+FetchContent_MakeAvailable(googletest)
 
 # --- Doxygen configuration ---
 find_package(Doxygen)
@@ -28,3 +41,7 @@ else()
 endif()
 
 add_subdirectory(src)
+
+# --- Tests ---
+enable_testing()
+add_subdirectory(tests)

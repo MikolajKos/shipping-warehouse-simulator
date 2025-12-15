@@ -1,3 +1,12 @@
+#ifndef UTILS_H
+#define UTILS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "common.h"
+
 /**
  * @file utils.h
  * @brief Utility functions header file.
@@ -5,11 +14,6 @@
  * Contains declarations for time handling, random package property generation,
  * and physical parameter calculations.
  */
-
-#ifndef UTILS_H
-#define UTILS_H
-
-#include "common.h"
 
 /**
  * @brief Retrieves the current system timestamp as a string.
@@ -42,5 +46,9 @@ double generate_weight(PackageType type);
  * @return double The volume corresponding to the package type.
  */
 double get_volume(PackageType type);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // UTILS_H
