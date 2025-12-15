@@ -56,7 +56,6 @@ typedef enum {
   PKG_B, /**< Medium package (0.046 m3) */
   PKG_C  /**< Large package (0.099 m3) */
 } PackageType;
-/** @} */
 
 /**
  * @brief Represents a single package on the conveyor belt.
