@@ -1,8 +1,3 @@
-/**
- * @file common.h
- * @brief Common definitions, IPC structures, and helper functions
-*/
-
 #ifndef COMMON_H
 #define COMMON_H
 
@@ -13,6 +8,11 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/types.h>
+
+/**
+ * @file common.h
+ * @brief Common definitions, IPC structures, and helper functions
+*/
 
 /**
  * @name IPC Key Generation Constants
