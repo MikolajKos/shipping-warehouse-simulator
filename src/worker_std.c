@@ -1,8 +1,10 @@
-#include "common.h"
-#include "utils.h"
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <string.h>
+
+#include "common.h"
+#include "shm_wrapper.h"
+#include "utils.h"
 
 int main(int argc, char *argv[]) {
   if(argc < 2) {
@@ -20,29 +22,14 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  // IPC Setup
-  key_t key_shm = ftok(KEY_PATH, KEY_ID_SHM);
-  key_t key_sem = ftok(KEY_PATH, KEY_ID_SEM);
-
-  // Setting minimal privileges
-  int shmid = shmget(key_shm, 0, 0600);
-  int semid = semget(key_sem, 0, 0600);
-
-  if (shmid == -1 || semid == -1) {
-    perror("Std. Worker: IPC attach failed");
-    exit(1);
-  }
-
-  // Attaching shared memory
+  // Shared Memory and Semaphores attachment
   SharedState *shm;
 
-  void* shm_result = shmat(shmid, 0, NULL);
-  if (shm_result == (void *)-1) {
-    perror("Std. Worker: shmat() failed");
-    exit(1);
-  }
-
-  shm = (SharedState *)shm_result;
-
+  shm = (SharedState *)attach_memory_block(
+    KEY_PATH,
+    KEY_ID_SHM,
+    sizeof(SharedState)
+  );
+  
   return 0;
 }
