@@ -99,47 +99,4 @@ typedef struct {
 
 } SharedState;
 
-/** @name Semaphore Operations
- * Inline helpers for standard P (wait) and V (signal) operations.
- */
-///@{
-
-/**
- * @brief Performs a semaphore operation using `semop`.
- * * Exits the program on failure, unless the error is EINTR (interrupted system call),
- * which is common when handling signals.
- *
- * @param semid The semaphore set ID.
- * @param sem_num The index of the semaphore within the set.
- * @param op The operation value (-1 for wait/decrement, +1 for signal/increment).
- */
-static inline void sem_op(int semid, int sem_num, int op) {
-  struct sembuf sb;
-  sb.sem_num = sem_num;
-  sb.sem_op = op;
-  sb.sem_flg = SEM_UNDO; // Unlock if process malfunctions
-
-  if(semop(semid, &sb, 1) == -1) {
-    // if semaphore was interrupted by signal, ignore semop error
-    if(errno != EINTR) {
-      perror("semop failed");
-      exit(EXIT_FAILURE);
-    }
-  }
-}
-
-/** * @brief P operation macro (Wait). Decrements semaphore. Blocks if value is 0. 
- * @param semid Semaphore Set ID
- * @param idx Semaphore Index
- */
-#define P(semid, idx) sem_op(semid, idx, -1)
-
-/** * @brief V operation (Signal). Increments semaphore. Wakes up waiting processes. 
- * @param semid Semaphore Set ID
- * @param idx Semaphore Index
- */
-#define V(semid, idx) sem_op(semid, idx, 1)
-
-///@}
-
-#endif
+#endif // COMMON_H
