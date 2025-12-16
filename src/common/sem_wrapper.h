@@ -1,6 +1,8 @@
 #ifndef SEM_WRAPPER_H
 #define SEM_WRAPPER_H
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/types.h>
