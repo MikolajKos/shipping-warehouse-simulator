@@ -1,10 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <time.h>
   
 #include "common.h"
@@ -59,8 +55,4 @@ double get_volume(PackageType type);
  */
 PackageType get_rand_package_type();
   
-#ifdef __cplusplus
-}
-#endif
-
 #endif // UTILS_H
