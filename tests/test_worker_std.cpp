@@ -99,7 +99,7 @@ TEST_F(WorkerStandardTest, PlacesPackagesIfSpaceEmpty) {
   EXPECT_GT(shm->current_belt_weight, 0.0);
 }
 
-// TEST 1: belts weight limit is reached, worker can't place next package
+// TEST 2: belts weight limit is reached, worker can't place next package
 TEST_F(WorkerStandardTest, BeltsWeightLimitReachedCantPlace) {
   shm->max_belt_weight_M = 0.0;
   
@@ -107,4 +107,16 @@ TEST_F(WorkerStandardTest, BeltsWeightLimitReachedCantPlace) {
   usleep(500000);
 
   EXPECT_EQ(shm->current_belt_weight, 0.0);
+}
+
+// TEST 3: worker cant place new packages if belt is full
+TEST_F(WorkerStandardTest, BlockIfBeltIsFull) {
+  union semun arg;
+  arg.val = 0;
+  semctl(semid, SEM_EMPTY, SETVAL, arg);
+
+  shm->current_count = 0;
+  
+  RunWorkerProcess();
+  EXPECT_EQ(shm->current_count, 0);
 }
