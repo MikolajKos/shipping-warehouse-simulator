@@ -15,6 +15,27 @@
 */
 
 /**
+ * @name ANSI Color Codes
+ * @brief ANSI escape sequences used for colorizing terminal output.
+ *
+ * These macros allow for colored text in standard output to visually distinguish
+ * between different processes (e.g., Workers, Trucks) or message types (Errors, Info).
+ *
+ * @note Always ensure to append @ref COLOR_RESET at the end of the string to restore
+ * default terminal colors.
+ *
+ * @{
+ */
+#define COLOR_RED     "\x1b[31m" /**< Sets text color to Red (often used for Errors or Alerts). */
+#define COLOR_GREEN   "\x1b[32m" /**< Sets text color to Green (often used for Success messages). */
+#define COLOR_YELLOW  "\x1b[33m" /**< Sets text color to Yellow (often used for Warnings). */
+#define COLOR_BLUE    "\x1b[34m" /**< Sets text color to Blue. */
+#define COLOR_MAGENTA "\x1b[35m" /**< Sets text color to Magenta. */
+#define COLOR_CYAN    "\x1b[36m" /**< Sets text color to Cyan. */
+#define COLOR_RESET   "\x1b[0m"  /**< Resets text color to default terminal settings. */
+/** @} */
+
+/**
  * @name IPC Key Generation Constants
  * Constants used to generate unique IPC keys via ftok().
  * @{
