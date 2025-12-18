@@ -30,3 +30,7 @@ double generate_weight(PackageType type) {
 
   return weight;
 }
+
+PackageType get_rand_package_type() {
+  return (PackageType)(rand() % 3);
+}
