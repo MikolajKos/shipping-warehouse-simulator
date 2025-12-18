@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
   // Gets access to semaphores
   int semid = get_sem(KEY_PATH, KEY_ID_SEM, 0);
 
+  int allow_full_belt_msg = 1;
   char time_buf[64];
   srand(time(NULL) ^ getpid()); // Seed random
   
@@ -63,10 +64,26 @@ int main(int argc, char *argv[]) {
       SEM_V(semid, SEM_MUTEX);
       SEM_V(semid, SEM_EMPTY);
 
+      // Print  only at first occurrance
+      if (allow_full_belt_msg) {
+	get_time(time_buf, sizeof(time_buf));
+	printf("[%s] Worker P%d: pkg %s (%.2f kg) Load: %.2f/%.2f. Limit reached...\n",
+	       time_buf,
+	       (type==PKG_A ? 1 : (type==PKG_B ? 2 : 3)),
+	       argv[1], // Package type
+	       w,
+	       shm->current_belt_weight,
+	       shm->max_belt_weight_M
+	);
+	
+	allow_full_belt_msg = 0;
+      }
+
       // Waits few 100ms to avoid busy loop slamming
       usleep(100000);
       continue;
     }
+    allow_full_belt_msg = 1; // Allow printing full belt message after successfuly placing next package
 
     // Placing package on belt
     int idx = shm->tail;
