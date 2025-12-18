@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <time.h>
+  
 #include "common.h"
 
 /**
@@ -47,6 +49,16 @@ double generate_weight(PackageType type);
  */
 double get_volume(PackageType type);
 
+/**
+ * @brief Generates a random package type.
+ *
+ * Assumes that the random number generator has been already seeded
+ * (e.g., in main() using srand()).
+ *
+ * @return PackageType A randomly selected package type.
+ */
+PackageType get_rand_package_type();
+  
 #ifdef __cplusplus
 }
 #endif
