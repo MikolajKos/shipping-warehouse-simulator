@@ -61,6 +61,10 @@ int main(int argc, char *argv[]) {
     shm->truck_docked = 1;
     shm->current_truck_load = 0.0;
     shm->current_truck_vol = 0.0;
+
+    // Reset force departure
+    force_departure = 0;
+
     SEM_V(semid, SEM_MUTEX);
 
     get_time(time_buf, sizeof(time_buf));
@@ -133,8 +137,6 @@ int main(int argc, char *argv[]) {
       // Simulate loading time
       usleep(100000);
     }
-    // Reset force departure
-    force_departure = 0;
     
     // Undocking
     SEM_P(semid, SEM_MUTEX);
