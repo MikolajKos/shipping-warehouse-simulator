@@ -116,7 +116,7 @@ typedef struct {
   int truck_docked;
   double current_truck_load;
   double current_truck_vol;
-  int force_departure;  /**< Flag for early truck departure */
+  //int force_departure;  /**< Flag for early truck departure */
 
 } SharedState;
 
