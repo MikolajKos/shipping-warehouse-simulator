@@ -11,7 +11,7 @@
 volatile sig_atomic_t load_signal = 0;
 
 void handle_sigusr1(int sig) {
-  (void)sig;
+  (void)sig; // Satisfies compiler
   load_signal = 1;
 }
 
@@ -43,7 +43,7 @@ void load_express_packages(SharedState *shm, int count) {
 }
 
 int main() {
-  // Signal Setup
+  // Register signal handler
   struct sigaction sa;
   sa.sa_handler = handle_sigusr1;
   sigemptyset(&sa.sa_mask);
