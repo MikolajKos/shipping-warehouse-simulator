@@ -112,7 +112,7 @@ typedef struct {
   double current_belt_weight;
 
   /* Truck Interface */
-  pid_t current_track_pid;
+  pid_t current_truck_pid;
   int truck_docked;
   double current_truck_load;
   double current_truck_vol;
