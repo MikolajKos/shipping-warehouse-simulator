@@ -5,6 +5,7 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 extern "C" {
   #include "../src/common/common.h"
@@ -93,15 +94,16 @@ protected:
     usleep(100000);
   }
 
-  void PlacePkgsOnBelt(int count) {
+  void PlacePkgsOnBelt(int count, double preset_w = 0, PackageType preset_type = PKG_END) {
     shm->max_items_K = count;
     shm->max_belt_weight_M = count * 25.0;
-
+    
     Package pkg;
     for (int i = 0; i < count; ++i) {
-      pkg.id = i; 
-      pkg.type = get_rand_package_type();
-      pkg.weight = generate_weight(pkg.type);
+      pkg.id = i;
+
+      pkg.type = preset_type == PKG_END ? get_rand_package_type() : preset_type;
+      pkg.weight = preset_w ? preset_w : generate_weight(pkg.type);
       pkg.volume = get_volume(pkg.type);
 
       shm->belt[i] = pkg;
@@ -116,6 +118,7 @@ protected:
   }
 };
 
+// Truck loaded all packages from belt
 TEST_F(TruckTest, LoadingAllPackages) {
   PlacePkgsOnBelt(5);
 
@@ -126,4 +129,37 @@ TEST_F(TruckTest, LoadingAllPackages) {
   sleep(3);
 
   EXPECT_DOUBLE_EQ(initial_belt_weight, shm->current_truck_load);
+  
+  kill(shm->current_truck_pid, SIGKILL);
 }
+
+TEST_F(TruckTest, PkgLoadingAndDeparture) {
+  int count = 2;
+  double weight = 20.0;
+  double weight_sum = count * weight;
+
+  // Set truck capacity
+  shm->truck_capacity_W = weight;
+
+  union semun arg;
+  arg.val = 2;
+  semctl(semid, SEM_FULL, SETVAL, count);
+  
+  PlacePkgsOnBelt(count, weight, PKG_C);
+  ASSERT_EQ(shm->current_belt_weight, weight_sum);
+
+  RunTruckProcess();
+  
+  // Wait for truck to load and deliver all 3 packgages
+  // About 5.5s for each package
+  sleep(20);
+  
+  EXPECT_DOUBLE_EQ(shm->current_truck_load, 0.0);
+  EXPECT_DOUBLE_EQ(shm->current_truck_vol, 0.0);
+
+  EXPECT_DOUBLE_EQ(shm->current_belt_weight, 0.0);
+
+  kill(shm->current_truck_pid, SIGKILL);
+}
+
+

@@ -75,7 +75,8 @@
 typedef enum {
   PKG_A, /**< Small package (0.019 m3) */
   PKG_B, /**< Medium package (0.046 m3) */
-  PKG_C  /**< Large package (0.099 m3) */
+  PKG_C, /**< Large package (0.099 m3) */
+  PKG_END/**< End of package type list (type count)*/
 } PackageType;
 
 /**
