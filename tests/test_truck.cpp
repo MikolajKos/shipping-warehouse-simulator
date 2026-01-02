@@ -20,6 +20,8 @@ extern "C" {
 
 class TruckTest : public ::testing::Test {
 protected:
+  pid_t saved_truck_pid = -1;
+  
   SharedState *shm;
   int semid;
   int shmid;
@@ -68,9 +70,9 @@ protected:
 
   void TearDown() {
     // Kill truck process
-    if(shm->current_truck_pid > 0) {
-      kill(shm->current_truck_pid, SIGKILL);
-      waitpid(shm->current_truck_pid, NULL, 0);
+    if(saved_truck_pid > 0) {
+      kill(saved_truck_pid, SIGKILL);
+      waitpid(saved_truck_pid, NULL, 0); // Wait for zombie process
     }
 
     // Detach and destroy shared memory
@@ -81,20 +83,23 @@ protected:
   }
 
   void RunTruckProcess() {
-    shm->current_truck_pid = fork();
+    pid_t pid = fork();
 
-    if (shm->current_truck_pid == 0) {
+    if (pid == 0) {
       execl("../src/truck", "truck", "1", NULL);
 
       perror("execl failed");
       exit(1);
     }
 
+    shm->current_truck_pid = pid;
+    saved_truck_pid = pid;
+
     // Parent waits for child
     usleep(100000);
   }
 
-  void PlacePkgsOnBelt(int count, double preset_w = 0, PackageType preset_type = PKG_END) {
+  void PlacePkgsOnBelt(int count, double preset_w = 0, double preset_v = 0, PackageType preset_type = PKG_END) {
     shm->max_items_K = count;
     shm->max_belt_weight_M = count * 25.0;
     
@@ -104,7 +109,7 @@ protected:
 
       pkg.type = preset_type == PKG_END ? get_rand_package_type() : preset_type;
       pkg.weight = preset_w ? preset_w : generate_weight(pkg.type);
-      pkg.volume = get_volume(pkg.type);
+      pkg.volume = preset_v ? preset_v : get_volume(pkg.type);
 
       shm->belt[i] = pkg;
 
@@ -141,13 +146,13 @@ TEST_F(TruckTest, PkgLoadingAndDeparture) {
   // Set truck capacity
   shm->truck_capacity_W = weight;
 
-  union semun arg;
-  arg.val = 2;
-  semctl(semid, SEM_FULL, SETVAL, count);
-  
-  PlacePkgsOnBelt(count, weight, PKG_C);
+  PlacePkgsOnBelt(count, weight, 0, PKG_C);
   ASSERT_EQ(shm->current_belt_weight, weight_sum);
-
+  
+  union semun arg;
+  arg.val = count;
+  semctl(semid, SEM_FULL, SETVAL, arg);
+  
   RunTruckProcess();
   
   // Wait for truck to load and deliver all 3 packgages
@@ -158,8 +163,32 @@ TEST_F(TruckTest, PkgLoadingAndDeparture) {
   EXPECT_DOUBLE_EQ(shm->current_truck_vol, 0.0);
 
   EXPECT_DOUBLE_EQ(shm->current_belt_weight, 0.0);
+}
 
-  kill(shm->current_truck_pid, SIGKILL);
+TEST_F(TruckTest, RespectsVolumeLimits) {
+  shm->truck_capacity_W = 1000.0;
+  shm->truck_volume_V = 10.0;
+
+  int count = 2;
+  double weight = 10.0;
+  double volume = 6.0;
+  double weight_sum = count * weight;
+  
+  PlacePkgsOnBelt(count, weight, volume, PKG_C);
+  ASSERT_EQ(weight_sum, shm->current_belt_weight);
+
+  union semun arg;
+  arg.val = count;
+  semctl(semid, SEM_FULL, SETVAL, arg);
+
+  RunTruckProcess();
+  sleep(2); // Loading package
+
+  EXPECT_DOUBLE_EQ(shm->current_truck_load, 10.0);
+  EXPECT_DOUBLE_EQ(shm->current_truck_vol, 6.0);
+
+  // One package left on belt
+  EXPECT_DOUBLE_EQ(shm->current_belt_weight, 10.0);
 }
 
 
