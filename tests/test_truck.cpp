@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#include <vector>
+
 extern "C" {
   #include "../src/common/common.h"
   #include "../src/common/utils.h"
@@ -20,13 +22,15 @@ extern "C" {
 
 class TruckTest : public ::testing::Test {
 protected:
-  pid_t saved_truck_pid = -1;
+  //pid_t saved_truck_pid = -1;
+  std::vector<pid_t> truck_pids; // Collection of all runnig truck pids
   
   SharedState *shm;
   int semid;
   int shmid;
-
-  void SetUp() {
+  int current_belt_item_id = 0;
+  
+  void SetUp() override {
     // IPC Keys
     key_t key_shm = ftok(KEY_PATH, KEY_ID_SHM);
     key_t key_sem = ftok(KEY_PATH, KEY_ID_SEM);
@@ -39,8 +43,8 @@ protected:
 
     // Set shm
     memset(shm, 0, sizeof(SharedState));
-    shm->max_items_K = 10;
-    shm->max_belt_weight_M = 500.0;
+    shm->max_items_K = 100;
+    shm->max_belt_weight_M = 1000.0;
     shm->current_truck_load = 0.0;
     shm->truck_docked = 0;
     shm->shutdown = 0;
@@ -68,58 +72,61 @@ protected:
     
   }
 
-  void TearDown() {
-    // Kill truck process
-    if(saved_truck_pid > 0) {
-      kill(saved_truck_pid, SIGKILL);
-      waitpid(saved_truck_pid, NULL, 0); // Wait for zombie process
+  void TearDown() override {
+    // Kill truck processes
+    for (pid_t pid : truck_pids) {
+      if (pid > 0) {
+	kill(pid, SIGKILL);
+	waitpid(pid, NULL, 0);
+      }
     }
-
+    truck_pids.clear();
+    
     // Detach and destroy shared memory
     shmdt(shm);
     shmctl(shmid, IPC_RMID, 0);
 
+    // Destroy Semaphores
     semctl(semid, 0, IPC_RMID);
   }
 
-  void RunTruckProcess() {
+  void RunTruckProcess(int id) {
     pid_t pid = fork();
 
     if (pid == 0) {
-      execl("../src/truck", "truck", "1", NULL);
-
+      std::string id_str = std::to_string(id);
+      
+      execl("../src/truck", "truck", id_str.c_str(), NULL);
       perror("execl failed");
       exit(1);
     }
 
-    shm->current_truck_pid = pid;
-    saved_truck_pid = pid;
+    truck_pids.push_back(pid);
 
     // Parent waits for child
     usleep(100000);
   }
 
   void PlacePkgsOnBelt(int count, double preset_w = 0, double preset_v = 0, PackageType preset_type = PKG_END) {
-    shm->max_items_K = count;
-    shm->current_count = count;
-    shm->max_belt_weight_M = count * 25.0;
+    shm->max_belt_weight_M += count * 25.0;
     
     Package pkg;
     for (int i = 0; i < count; ++i) {
-      pkg.id = i;
+      pkg.id = current_belt_item_id;
 
       pkg.type = preset_type == PKG_END ? get_rand_package_type() : preset_type;
       pkg.weight = preset_w ? preset_w : generate_weight(pkg.type);
       pkg.volume = preset_v ? preset_v : get_volume(pkg.type);
 
-      shm->belt[i] = pkg;
+      shm->belt[current_belt_item_id++] = pkg;
 
       shm->current_belt_weight += pkg.weight;
+      shm->current_count++;
     }
-    shm->tail = count % shm->max_items_K;
+    shm->tail = shm->current_count % shm->max_items_K;
     
     union semun arg;
-    arg.val = count;
+    arg.val = shm->current_count;
     semctl(semid, SEM_FULL, SETVAL, arg);
   }
 };
@@ -131,12 +138,10 @@ TEST_F(TruckTest, LoadingAllPackages) {
   ASSERT_GT(shm->current_belt_weight, 0.0);
   double initial_belt_weight = shm->current_belt_weight;
 
-  RunTruckProcess();
+  RunTruckProcess(1);
   sleep(3);
 
   EXPECT_DOUBLE_EQ(initial_belt_weight, shm->current_truck_load);
-  
-  kill(shm->current_truck_pid, SIGKILL);
 }
 
 TEST_F(TruckTest, PkgLoadingAndDeparture) {
@@ -154,7 +159,7 @@ TEST_F(TruckTest, PkgLoadingAndDeparture) {
   arg.val = count;
   semctl(semid, SEM_FULL, SETVAL, arg);
   
-  RunTruckProcess();
+  RunTruckProcess(1);
   
   // Wait for truck to load and deliver all 3 packgages
   // About 5.5s for each package
@@ -178,7 +183,7 @@ TEST_F(TruckTest, RespectsVolumeLimits) {
   PlacePkgsOnBelt(count, weight, volume, PKG_C);
   ASSERT_EQ(weight_sum, shm->current_belt_weight);
 
-  RunTruckProcess();
+  RunTruckProcess(1);
   sleep(2); // Loading package
 
   EXPECT_DOUBLE_EQ(shm->current_truck_load, 10.0);
@@ -190,15 +195,19 @@ TEST_F(TruckTest, RespectsVolumeLimits) {
 
 
 TEST_F(TruckTest, ForcedDepartureBySignal) {
+  shm->truck_docked = 0;
+
   int count = 10;
   PlacePkgsOnBelt(count);
 
-  RunTruckProcess();
-  usleep(400000); // Loads 3-4 packages
+  RunTruckProcess(1);
+  usleep(200000); // Loads 1-3 packages
 
-  ASSERT_GT(shm->current_truck_pid, 0);
+  pid_t current_t_pid = truck_pids.at(0);
+  
+  ASSERT_GT(current_t_pid, 0);
   // Sends signal
-  kill(shm->current_truck_pid, SIGUSR1);
+  kill(current_t_pid, SIGUSR1);
 
   sleep(1); // Wait for action
 
@@ -222,7 +231,7 @@ TEST_F(TruckTest, SkipOversizedPackage) {
 
   PlacePkgsOnBelt(count, weight);
 
-  RunTruckProcess();
+  RunTruckProcess(1);
   usleep(400000); // Loading package
 
   // Truck should be empty
@@ -231,5 +240,29 @@ TEST_F(TruckTest, SkipOversizedPackage) {
 
   // Package wasn't loaded, should be still on belt
   EXPECT_DOUBLE_EQ(shm->current_belt_weight, weight);
+  EXPECT_EQ(shm->current_count, 1);
+}
+
+// Testing consistency of package loading
+// Next arriving truck should load first package from belt
+TEST_F(TruckTest, NextTruckLoadsFirstItem) {
+  shm->truck_capacity_W = 10.0;
+  shm->truck_volume_V = 100.0;
+
+  // Placing two different packages to distinguish trucks
+  PlacePkgsOnBelt(1, 10.0);
+  PlacePkgsOnBelt(1, 7.0);
+  // This Package should not be loaded
+  PlacePkgsOnBelt(1, 100.0);
+  
+  RunTruckProcess(1);
+
+  // This is process that should load last package
+  RunTruckProcess(2);
+
+  sleep(2); // Waits for last truck to load package
+
+  EXPECT_DOUBLE_EQ(shm->current_truck_load, 7.0);
+  EXPECT_DOUBLE_EQ(shm->current_belt_weight, 100.0);
   EXPECT_EQ(shm->current_count, 1);
 }
