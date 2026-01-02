@@ -82,6 +82,14 @@ int main(int argc, char *argv[]) {
 
       if (shm->shutdown) break;
 
+      // case: Limit is reached exactly (eg. truck load: 20/20 kg)
+      if (shm->current_truck_load >= shm->truck_capacity_W ||
+	  shm->current_truck_vol >= shm->truck_volume_V) {
+	get_time(time_buf, sizeof(time_buf));
+	printf("["COLOR_GREEN"%s"COLOR_RESET"]"COLOR_CYAN" Truck %d  "COLOR_RESET"Truck filled to capacity. Departure...\n", time_buf, truck_id);
+	break;
+      }
+      
       // Waiting For Packages (SEM_FULL)
       // If process waits on SEM_FULL semaphore and forced departure is called
       // truck could possibly stuck here.
@@ -136,7 +144,7 @@ int main(int argc, char *argv[]) {
 
       // Simulate loading time
       usleep(100000);
-    }
+    } // END OF LOADING LOOP
     
     // Undocking
     SEM_P(semid, SEM_MUTEX);
@@ -151,6 +159,8 @@ int main(int argc, char *argv[]) {
 
       SEM_V(semid, SEM_MUTEX);
       SEM_V(semid, SEM_DOCK);
+
+      sleep(1); // Drive back to queue
       continue;
     }
     
