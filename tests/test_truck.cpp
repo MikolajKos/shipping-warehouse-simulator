@@ -101,6 +101,7 @@ protected:
 
   void PlacePkgsOnBelt(int count, double preset_w = 0, double preset_v = 0, PackageType preset_type = PKG_END) {
     shm->max_items_K = count;
+    shm->current_count = count;
     shm->max_belt_weight_M = count * 25.0;
     
     Package pkg;
@@ -177,10 +178,6 @@ TEST_F(TruckTest, RespectsVolumeLimits) {
   PlacePkgsOnBelt(count, weight, volume, PKG_C);
   ASSERT_EQ(weight_sum, shm->current_belt_weight);
 
-  union semun arg;
-  arg.val = count;
-  semctl(semid, SEM_FULL, SETVAL, arg);
-
   RunTruckProcess();
   sleep(2); // Loading package
 
@@ -192,3 +189,47 @@ TEST_F(TruckTest, RespectsVolumeLimits) {
 }
 
 
+TEST_F(TruckTest, ForcedDepartureBySignal) {
+  int count = 10;
+  PlacePkgsOnBelt(count);
+
+  RunTruckProcess();
+  usleep(400000); // Loads 3-4 packages
+
+  ASSERT_GT(shm->current_truck_pid, 0);
+  // Sends signal
+  kill(shm->current_truck_pid, SIGUSR1);
+
+  sleep(1); // Wait for action
+
+  // Few packages must be loaded
+  EXPECT_GT(shm->current_truck_load, 0.0);
+
+  // Truck can't load all packages
+  EXPECT_LT(shm->current_truck_load, shm->current_belt_weight + shm->current_truck_load);
+
+  // Truck should be delivering
+  EXPECT_EQ(shm->truck_docked, 0);
+}
+
+
+TEST_F(TruckTest, SkipOversizedPackage) {
+  shm->truck_capacity_W = 10.0;
+  shm->truck_volume_V = 100.0;
+
+  int count = 1;
+  double weight = 20.0;
+
+  PlacePkgsOnBelt(count, weight);
+
+  RunTruckProcess();
+  usleep(400000); // Loading package
+
+  // Truck should be empty
+  EXPECT_DOUBLE_EQ(shm->current_truck_load, 0.0);
+  EXPECT_DOUBLE_EQ(shm->current_truck_vol, 0.0);
+
+  // Package wasn't loaded, should be still on belt
+  EXPECT_DOUBLE_EQ(shm->current_belt_weight, weight);
+  EXPECT_EQ(shm->current_count, 1);
+}

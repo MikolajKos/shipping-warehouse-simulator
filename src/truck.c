@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
 
       // Simulate loading time
       usleep(100000);
-    }
+    } // END OF LOADING LOOP
     
     // Undocking
     SEM_P(semid, SEM_MUTEX);
@@ -159,6 +159,8 @@ int main(int argc, char *argv[]) {
 
       SEM_V(semid, SEM_MUTEX);
       SEM_V(semid, SEM_DOCK);
+
+      sleep(1); // Drive back to queue
       continue;
     }
     
