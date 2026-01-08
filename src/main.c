@@ -1,10 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include <common/common.h>
-#include <common/sem_wrapper.h>
-#include <common/shm_wrapper.h>
-#include <common/utils.h>
+#include "common/common.h"
+#include "common/sem_wrapper.h"
+#include "common/shm_wrapper.h"
+#include "common/utils.h"
+
+// HELPER FUNCTIONS
+
+void shm_init(SharedState *shm, int K, double M, double W, double V) {
+  memset(shm, 0, sizeof(SharedState));
+
+  shm->max_items_K = K;
+  shm->max_belt_weight_M = M;
+  shm->truck_capacity_W = W;
+  shm->truck_volume_V = V;
+
+  shm->shutdown = 0;
+  shm->truck_docked = 0;
+}
+
+void sem_init(int semid, int K) {
+  sem_set(semid, SEM_MUTEX, SETVAL, 1);
+  sem_set(semid, SEM_EMPTY, SETVAL, K);
+  sem_set(semid, SEM_FULL, SETVAL, 0);
+  sem_set(semid, SEM_DOCK, SETVAL, 1);
+}
 
 int main(int argc, char *argv[]) {
   if (argc < 6) {
@@ -29,8 +52,61 @@ int main(int argc, char *argv[]) {
   }
 
   // --- IPC Initialization ---
+  // Semaphore init
   int semid = get_sem(KEY_PATH, KEY_ID_SEM, 4);
-  int shmid = 
 
+  // Shared mem attachment
+  SharedState *shm;
+  shm = (SharedState *)attach_memory_block(KEY_PATH, KEY_ID_SHM, sizeof(SharedState));
+
+  shm_init(shm, K, M, W, V);
+  sem_init(semid, K);
+
+  printf("--- "COLOR_BLUE" Simulation Started "COLOR_RESET"---\n");
+  printf("Params: N=%d, K=%d, M=%.2f, W=%.2f, V=%.2f\n", N, K, M, W, V);
+
+  // --- Fork Processes ---
+
+  // Worker P4 (Express)
+  pid_t pid_p4 = fork();
+  if(pid_p4 == 0) {
+    execl("./worker_express", "worker_express", NULL);
+    perror("Exec P4"); exit(1);
+  }
+
+  // Workers: P1, P2, P3 (Standard)
+  pid_t workers[3];
+  const char *types[] = {"A", "B", "C"};
+  
+  for(int i=0; i<3; ++i) {
+    if((workers[i] = fork()) == 0) {
+      execl("./worker_std", "worker_std", types[i], NULL);
+      perror("Exec Worker"); exit(1);
+    }
+  }
+
+  // Trucks
+  pid_t *trucks = malloc(sizeof(pid_t) * N);
+
+  for(int i=0; i<N; ++i) {
+    if((trucks[i] = fork()) == 0) {
+      char id_str[11];
+      sprintf(id_str, "%d", i+1);
+      execl("./truck", "truck", id_str, NULL);
+      perror("Exec Truck"); exit(1);
+    }
+  }
+
+  //  temporary
+  sleep(60);
+  
+  // Destructing IPC and allocated mem
+  free(trucks);
+  
+  detach_memory_block(shm);
+  destroy_memory_block(KEY_PATH, KEY_ID_SHM);
+
+  sem_set(semid, 0, IPC_RMID, 0);
+  
   return 0;
 }
