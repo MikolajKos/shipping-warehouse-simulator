@@ -1,6 +1,9 @@
+#include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "common/common.h"
@@ -51,6 +54,13 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  // --- Logs File ---
+  // Default process output file is being changed to simulation.log
+  // To avoid garbage in main terminal where commands are being handled
+  // Use tail -f simulation.log to display logs in other terminal window
+  int log_ds = open("simulation.log", O_WRONLY | O_CREAT | O_TRUNC, 0600);
+  if (log_ds == -1) { perror("Log file"); exit(1); }
+  
   // --- IPC Initialization ---
   // Semaphore init
   int semid = get_sem(KEY_PATH, KEY_ID_SEM, 4);
@@ -70,6 +80,9 @@ int main(int argc, char *argv[]) {
   // Worker P4 (Express)
   pid_t pid_p4 = fork();
   if(pid_p4 == 0) {
+    // Change standart output
+    if (dup2(log_ds, STDOUT_FILENO) == -1) { perror("dup2 P4"); exit(1); }
+
     execl("./worker_express", "worker_express", NULL);
     perror("Exec P4"); exit(1);
   }
@@ -81,6 +94,9 @@ int main(int argc, char *argv[]) {
   
   for(int i=0; i<3; ++i) {
     if((workers[i] = fork()) == 0) {
+      // Change standart output
+      if (dup2(log_ds, STDOUT_FILENO) == -1) { perror("dup2 Std. Worker"); exit(1); }
+      
       execl("./worker_std", "worker_std", types[i], NULL);
       perror("Exec Worker"); exit(1);
     }
@@ -91,6 +107,9 @@ int main(int argc, char *argv[]) {
 
   for(int i=0; i<N; ++i) {
     if((trucks[i] = fork()) == 0) {
+      // Change standart output
+      if (dup2(log_ds, STDOUT_FILENO) == -1) { perror("dup2 Truck"); exit(1); }
+      
       char id_str[11];
       sprintf(id_str, "%d", i+1);
       execl("./truck", "truck", id_str, NULL);
@@ -119,7 +138,8 @@ int main(int argc, char *argv[]) {
       SEM_P(semid, SEM_MUTEX);
 
       if (shm->truck_docked) {
-	get_time(time_buf);
+
+	get_time(time_buf, sizeof(time_buf));
 	printf("["COLOR_GREEN"%s"COLOR_RESET"]"COLOR_BLUE"  Dispatcher "COLOR_RESET"Signaling truck %d to depart early.\n", time_buf, shm->current_truck_pid);
 
 	// Sends force departure signal to the truck
@@ -156,6 +176,12 @@ int main(int argc, char *argv[]) {
 	kill(trucks[i], SIGTERM);
 	printf(" -- ["COLOR_YELLOW"-"COLOR_RESET"]  Truck: %d\n", i+1);
       }
+
+      break;
+    }
+    else { // Incorrect Argument
+      printf("Unknown Command\n");
+      continue;
     }
   }
 
