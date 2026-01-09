@@ -73,7 +73,8 @@ int main(int argc, char *argv[]) {
     execl("./worker_express", "worker_express", NULL);
     perror("Exec P4"); exit(1);
   }
-
+  shm->p4_pid = pid_p4;
+  
   // Workers: P1, P2, P3 (Standard)
   pid_t workers[3];
   const char *types[] = {"A", "B", "C"};
@@ -97,8 +98,69 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  //  temporary
-  sleep(60);
+  // --- Dispatcher Loop ---
+  int cmd;
+  char time_buf[64];
+    
+  printf("\nCommands:\n 1: Force Truck Departure\n 2: Express Load (P4)\n 3: Shutdown\n");
+
+  while(1) {
+    printf("CMD> ");
+    fflush(stdout);
+
+    if (scanf("%d", &cmd) != 1) {
+      // Consume garbage
+      while(getchar() != '\n');
+      printf("Incorrect intput. Enter command number\n");
+      continue;
+    }
+
+    if (cmd == 1) {
+      SEM_P(semid, SEM_MUTEX);
+
+      if (shm->truck_docked) {
+	get_time(time_buf);
+	printf("["COLOR_GREEN"%s"COLOR_RESET"]"COLOR_BLUE"  Dispatcher "COLOR_RESET"Signaling truck %d to depart early.\n", time_buf, shm->current_truck_pid);
+
+	// Sends force departure signal to the truck
+	kill(shm->current_truck_pid, SIGUSR1);
+      }
+      else {
+	get_time(time_buf, sizeof(time_buf));
+	printf("["COLOR_YELLOW"%s"COLOR_RESET"]"COLOR_BLUE"  Dispatcher "COLOR_RESET"No truck at dock to release.\n", time_buf);
+      }
+
+      SEM_V(semid, SEM_MUTEX);
+    }
+    else if (cmd == 2) { // Signaling P4 (Express)
+      get_time(time_buf, sizeof(time_buf));
+      printf("["COLOR_GREEN"%s"COLOR_RESET"]"COLOR_BLUE"  Dispatcher "COLOR_RESET"Signaling P4 (Express).\n", time_buf);
+
+      // No need for shared state access, p4_pid is being set once in dispatcher
+      kill(shm->p4_pid, SIGUSR1);
+    }
+    else if (cmd == 3) {
+      get_time(time_buf, sizeof(time_buf));
+      printf("["COLOR_RED"%s"COLOR_RESET"]"COLOR_BLUE"  Dispatcher "COLOR_RESET"Shutting down...\n", time_buf);
+
+      // Kills P1, P2 and P3
+      for(int i=0; i<3; ++i) {
+	kill(workers[i], SIGTERM);
+	printf(" -- ["COLOR_YELLOW"-"COLOR_RESET"]  Worker: P%d\n", i+1);
+      }
+      // Kills P4 (Express)
+      kill(shm->p4_pid, SIGTERM);
+      printf(" -- ["COLOR_YELLOW"-"COLOR_RESET"]  Worker: P4 (Express)\n");
+      // Kills trucks
+      for(int i=0; i<N; ++i) {
+	kill(trucks[i], SIGTERM);
+	printf(" -- ["COLOR_YELLOW"-"COLOR_RESET"]  Truck: %d\n", i+1);
+      }
+    }
+  }
+
+  // Wait for child processes to end its work
+  while(wait(NULL) > 0);
   
   // Destructing IPC and allocated mem
   free(trucks);
