@@ -1,6 +1,7 @@
 #include <signal.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "common/common.h"
 #include "common/sem_wrapper.h"
@@ -15,6 +16,9 @@ void handle_sigusr1(int sig) {
 }
 
 int main(int argc, char *argv[]) {
+  // Turn off buffering for real time logging to simulation.log file
+  setbuf(stdout, NULL);
+
   // Validate Arguments
   if (argc < 2) {
     fprintf(stderr, "Usage: %s <ID>\n", argv[0]);
@@ -144,6 +148,10 @@ int main(int argc, char *argv[]) {
 
       // Simulate loading time
       usleep(100000);
+
+#ifdef SIM_DELAY_MS
+      usleep(SIM_DELAY_MS * 1000);
+#endif
     } // END OF LOADING LOOP
     
     // Undocking

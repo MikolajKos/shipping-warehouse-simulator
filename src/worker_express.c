@@ -1,7 +1,8 @@
+#include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
 
 #include "common/common.h"
 #include "common/sem_wrapper.h"
@@ -43,6 +44,9 @@ void load_express_packages(SharedState *shm, int count) {
 }
 
 int main() {
+  // Turn off buffering for real time logging to simulation.log file
+  setbuf(stdout, NULL);
+  
   // Register signal handler
   struct sigaction sa;
   sa.sa_handler = handle_sigusr1;
@@ -90,6 +94,10 @@ int main() {
       load_signal = 0;
       SEM_V(semid, SEM_MUTEX);
     }
+
+#ifdef SIM_DELAY_MS
+    usleep(SIM_DELAY_MS * 1000);
+#endif
   }
 
   detach_memory_block(shm);
