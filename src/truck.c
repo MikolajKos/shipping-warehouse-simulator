@@ -148,6 +148,10 @@ int main(int argc, char *argv[]) {
 
       // Simulate loading time
       usleep(100000);
+
+#ifdef SIM_DELAY_MS
+      usleep(SIM_DELAY_MS * 1000);
+#endif
     } // END OF LOADING LOOP
     
     // Undocking

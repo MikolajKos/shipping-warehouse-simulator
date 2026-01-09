@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Usage: %s <N_Trucks> <K_BeltCap> <M_MaxBeltW> <W_TruckCap> <V_TruckVol>\n", argv[0]);
     exit(1);
   }
-
+  
   int N = atoi(argv[1]);
   int K = atoi(argv[2]);
   double M = atof(argv[3]);
@@ -73,6 +73,11 @@ int main(int argc, char *argv[]) {
   sem_init(semid, K);
 
   printf("--- "COLOR_BLUE" Simulation Started "COLOR_RESET"---\n");
+
+#ifdef SIM_DELAY_MS
+  printf("Simulation Delay Enabled: %d ms\n", SIM_DELAY_MS);
+#endif
+  
   printf("Params: N=%d, K=%d, M=%.2f, W=%.2f, V=%.2f\n", N, K, M, W, V);
 
   // --- Fork Processes ---
@@ -166,15 +171,15 @@ int main(int argc, char *argv[]) {
       // Kills P1, P2 and P3
       for(int i=0; i<3; ++i) {
 	kill(workers[i], SIGTERM);
-	printf(" -- ["COLOR_YELLOW"-"COLOR_RESET"]  Worker: P%d\n", i+1);
+	printf(" -> ["COLOR_YELLOW"-"COLOR_RESET"]  Worker: P%d\n", i+1);
       }
       // Kills P4 (Express)
       kill(shm->p4_pid, SIGTERM);
-      printf(" -- ["COLOR_YELLOW"-"COLOR_RESET"]  Worker: P4 (Express)\n");
+      printf(" -> ["COLOR_YELLOW"-"COLOR_RESET"]  Worker: P4 (Express)\n");
       // Kills trucks
       for(int i=0; i<N; ++i) {
 	kill(trucks[i], SIGTERM);
-	printf(" -- ["COLOR_YELLOW"-"COLOR_RESET"]  Truck: %d\n", i+1);
+	printf(" -> ["COLOR_YELLOW"-"COLOR_RESET"]  Truck: %d\n", i+1);
       }
 
       break;
