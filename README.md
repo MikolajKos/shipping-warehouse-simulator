@@ -72,3 +72,63 @@ Run the simulation from the build directory. You must provide the configuration 
 ```bash
 ./warehouse_sim 3 10 500.0 100.0 50.0
 ```
+
+**Interactive CLI Commands**
+Once running, the Dispatcher listens for commands on stdin:
+- 1: Force Departure - Signals the currently docked truck to leave immediately, regardless of load.
+- 2: Express Load - Signals the Express Worker (P4) to place a priority package.
+- 3: Shutdown - Sends SIGTERM to all processes, cleans up IPC resources, and exits safely.
+
+## 🔍 Observing Logs
+Since stdout of child processes is redirected to a file to keep the interface clean, open a second terminal window to watch the simulation in real-time:
+
+```bahs
+cd build/src
+tail -f simulation.log
+```
+
+## 🧪 Testing
+The project includes unit and integration tests covering the Truck, Workers and Shared Memory helpers logic.
+
+to run the tests:
+```bash
+cd build
+ctest --output-on-failure
+# OR run the test executable directly (more elegant and complete data display):
+cd build/tests
+./truck_tests
+```
+
+## 📂 Project Structure
+```bash
+.
+├── CMakeLists.txt              # Main build configuration
+├── build.sh
+├── doc
+│   └── Doxyfile.in
+├── src
+│   ├── CMakeLists.txt
+│   ├── common                  # Shared headers, IPC wrappers, Utils
+│   │   ├── CMakeLists.txt
+│   │   ├── common.h            # Shared structutres and definitions
+│   │   ├── sem_wrapper.c
+│   │   ├── sem_wrapper.h       # Helper library wrapping System V semaphore functions   
+│   │   ├── shm_wrapper.c
+│   │   ├── shm_wrapper.h       # Helper library wrapping Shared Memory      
+│   │   ├── utils.c
+│   │   └── utils.h
+│   ├── main.c                  # Warehouse dispatcher logic
+│   ├── truck.c                 # Truck process logic
+│   ├── worker_express.c        # Express Worker (P4) logic
+│   └── worker_std.c            # Stdandard Worker logic
+└── tests                       # GoogleTest scenarios
+    ├── CMakeLists.txt
+    ├── test_truck.cpp
+    ├── test_utils.cpp
+    ├── test_worker_express.cpp
+    └── test_worker_std.cpp
+```
+
+## 📄 License
+This project is open-source and available for educational purposes.
+
