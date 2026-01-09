@@ -1,11 +1,17 @@
 cmake_minimum_required(VERSION 3.25)
 project(ShippingWarehouse C CXX)
 
+# --- Delay Compile Deffinition ---
+if(DEFINED SIM_DELAY_MS)
+	   message(STATUS "Simulation delay enabled: ${SIM_DELAY_MS} ms")
+	   add_compile_definitions(SIM_DELAY_MS=${SIM_DELAY_MS})
+endif()
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_XOPEN_SOURCE=700 -Wall -Wextra -pthread")
 
 set(CMAKE_CXX_STANDARD 14) # Required by GTest
-
+		       
 # --- Installing GoogleTest ---
 include(FetchContent)
 FetchContent_Declare(
@@ -30,7 +36,7 @@ if (DOXYGEN_FOUND)
 
    # Set up "make doc" for docs build
    add_custom_target(doc
-	COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+   	COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Generating API documentation with Doxygen..."
         VERBATIM)

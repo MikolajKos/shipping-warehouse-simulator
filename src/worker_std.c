@@ -82,6 +82,8 @@ int main(int argc, char *argv[]) {
 
       // Waits few 100ms to avoid busy loop slamming
       usleep(100000);
+
+      // Take different package
       continue;
     }
     allow_full_belt_msg = 1; // Allow printing full belt message after successfuly placing next package
@@ -108,6 +110,10 @@ int main(int argc, char *argv[]) {
 
     // Simulates work time
     usleep(rand() % 500000 + 200000);
+
+#ifdef SIM_DELAY_MS
+    usleep(SIM_DELAY_MS * 1000);
+#endif
   }
 
   detach_memory_block(shm);

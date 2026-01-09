@@ -94,6 +94,10 @@ int main() {
       load_signal = 0;
       SEM_V(semid, SEM_MUTEX);
     }
+
+#ifdef SIM_DELAY_MS
+    usleep(SIM_DELAY_MS * 1000);
+#endif
   }
 
   detach_memory_block(shm);
