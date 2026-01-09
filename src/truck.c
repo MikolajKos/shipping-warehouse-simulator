@@ -1,6 +1,7 @@
 #include <signal.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "common/common.h"
 #include "common/sem_wrapper.h"
@@ -15,6 +16,9 @@ void handle_sigusr1(int sig) {
 }
 
 int main(int argc, char *argv[]) {
+  // Turn off buffering for real time logging to simulation.log file
+  setbuf(stdout, NULL);
+
   // Validate Arguments
   if (argc < 2) {
     fprintf(stderr, "Usage: %s <ID>\n", argv[0]);
