@@ -61,3 +61,14 @@ By default, the simulation runs almost at full CPU speed (few delays were implem
 cmake .. -DSIM_DELAY_MS=1000
 make
 ```
+
+## 🖥 Usage
+Run the simulation from the build directory. You must provide the configuration parameters:
+```bash
+./warehouse_sim <N_Trucks> <K_BeltCapacity> <M_MaxBeltWeight> <W_TruckWeight> <V_TruckVolume>
+```
+
+**Example:**
+```bash
+./warehouse_sim 3 10 500.0 100.0 50.0
+```
