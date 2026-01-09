@@ -33,7 +33,7 @@ target_link_libraries(worker_express_tests
 	pthread
 )
 
-gtest_discover_tests(
-	unit_tests
-	worker_express_tests
-)
+gtest_discover_tests(unit_tests)
+gtest_discover_tests(worker_express_tests)
+gtest_discover_tests(worker_std_tests)
+gtest_discover_tests(truck_tests)
