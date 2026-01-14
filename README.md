@@ -1,11 +1,28 @@
 # 🚛 Concurrent Warehouse Simulation
 
+[![Doxygen](https://img.shields.io/badge/Docs-Doxygen-blue?style=flat&logo=doxygen)](https://mkosiorek.pl/docs/warehouse_sim/files.html)
 ![Language](https://img.shields.io/badge/language-C11-blue.svg)
 ![Build System](https://img.shields.io/badge/build-CMake-green.svg)
 ![Testing](https://img.shields.io/badge/tests-GoogleTest-red.svg)
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)
 
 A high-performance, multi-process simulation of a logistics center using **System V IPC** (Shared Memory & Semaphores) for inter-process synchronization. The system models a real-time producer-consumer problem involving workers, a conveyor belt, and a fleet of delivery trucks with specific capacity constraints.
+
+## 📚 Documentation & Architecture
+
+The project features comprehensive technical documentation generated using **Doxygen**. It covers:
+* Detailed descriptions of all modules (Dispatcher, Truck, Workers).
+* **Dependency Graphs** (Include Graphs) visualizing code modularity.
+* Overview of data structures and IPC mechanisms.
+
+**[View Full Documentation Online](https://mkosiorek.pl/docs/warehouse_sim/files.html)**
+
+You can also generate the documentation locally:
+```bash
+cd build
+doxygen Doxyfile
+# Open doc_output/html/index.html in your web browser
+```
 
 ## 🚀 Key Features
 
