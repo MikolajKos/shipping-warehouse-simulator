@@ -1,3 +1,19 @@
+/**
+ * @file worker_express.c
+ * @brief Express Worker Process (P4) - Event-Driven Priority Loader.
+ *
+ * This file implements the logic for the Express Worker (P4).
+ * Unlike standard workers that continuously produce items for the belt, the Express Worker
+ * is **event-driven**. It sleeps until it receives a signal (`SIGUSR1`) from the Dispatcher.
+ *
+ * Key Features:
+ * - **Signal Handling:** Uses `pause()` to suspend execution until triggered.
+ * - **Direct Loading:** Bypasses the conveyor belt and loads packages directly onto the Truck.
+ * - **Priority Logic:** Executed on demand to simulate high-priority shipments.
+ *
+ * @author Mikołaj Kosiorek
+ */
+
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,13 +25,36 @@
 #include "common/shm_wrapper.h"
 #include "common/utils.h"
 
+/**
+ * @brief Atomic flag for signal handling.
+ *
+ * Defined as `volatile sig_atomic_t` to ensure safe access between the asynchronous
+ * signal handler and the main program loop without race conditions.
+ */
 volatile sig_atomic_t load_signal = 0;
 
+/**
+ * @brief Signal Handler for SIGUSR1.
+ *
+ * Sets the global flag `load_signal` to 1, waking up the main loop.
+ *
+ * @param sig The signal number (expected SIGUSR1).
+ */
 void handle_sigusr1(int sig) {
   (void)sig; // Satisfies compiler
   load_signal = 1;
 }
 
+/**
+ * @brief Simulates loading a batch of express packages directly into the truck.
+ *
+ * Iterates `count` times, generating random packages. Unlike standard workers,
+ * this function checks the **Truck's remaining capacity** directly and updates
+ * the load, bypassing the conveyor belt buffer.
+ *
+ * @param shm   Pointer to the shared memory state.
+ * @param count Number of packages to attempt to load in this batch.
+ */
 void load_express_packages(SharedState *shm, int count) {
   char time_buf[64];
   get_time(time_buf, sizeof(time_buf));
@@ -43,6 +82,24 @@ void load_express_packages(SharedState *shm, int count) {
   }
 }
 
+/**
+ * @brief Main Entry Point for Express Worker.
+ *
+ * **Flow of Execution:**
+ * 1. Disables stdout buffering for real-time logging.
+ * 2. Registers `handle_sigusr1` for `SIGUSR1`.
+ * 3. Attaches to Shared Memory and Semaphores.
+ * 4. Enters the Event Loop:
+ * - Calls `pause()` to sleep and wait for signals (saves CPU).
+ * - **On Wake Up:** Checks if `load_signal` is set.
+ * - **Critical Section:** Locks `SEM_MUTEX`.
+ * - Checks if a truck is present (`truck_docked`).
+ * - Calls `load_express_packages()` to load a random batch (1-5 items).
+ * - Unlocks `SEM_MUTEX`.
+ * - Resets `load_signal` and goes back to sleep.
+ *
+ * @return 0 on clean exit.
+ */
 int main() {
   // Turn off buffering for real time logging to simulation.log file
   setbuf(stdout, NULL);

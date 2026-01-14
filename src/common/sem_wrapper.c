@@ -13,7 +13,8 @@ void sem_op(int semid, int sem_num, int op) {
   sb.sem_op = op;
   sb.sem_flg = SEM_UNDO;
 
-  if (semop(semid, &sb, 1) == -1) {
+  while (semop(semid, &sb, 1) == -1) {
+    if (errno == EINTR) continue; // Signal was handled, retry wait
     perror("Sem. wrapper: semop() error");
     exit(1);
   }

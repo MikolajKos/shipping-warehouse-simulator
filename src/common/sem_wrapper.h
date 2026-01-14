@@ -1,6 +1,7 @@
 #ifndef SEM_WRAPPER_H
 #define SEM_WRAPPER_H
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
@@ -67,6 +68,9 @@
  * This function wraps `semop()`. It sets the `SEM_UNDO` flag, ensuring that
  * if the process terminates unexpectedly (e.g., crash), the changes to the
  * semaphore are automatically undone by the OS to prevent deadlocks.
+ * Also EINTR errno value is handled in case when process was interupted
+ * by a signal. Without this handler, after receiving signal, semaphore
+ * would return -1 and crash simulation.
  *
  * @param semid The semaphore set identifier.
  * @param sem_num The index of the specific semaphore within the set (0-based).

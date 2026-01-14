@@ -1,3 +1,18 @@
+/**
+ * @file main.c
+ * @brief Dispatcher Module - Simulation Orchestrator & CLI.
+ *
+ * This file contains the main entry point for the Warehouse Simulation.
+ * The Dispatcher process is responsible for:
+ * - Initializing System V IPC resources (Shared Memory & Semaphores).
+ * - Spawning child processes (Workers and Trucks) using fork/exec.
+ * - Redirecting child process output to a log file to keep the CLI clean.
+ * - Providing an interactive Command Line Interface (CLI) for user control.
+ * - Managing the simulation lifecycle and safe resource cleanup.
+ *
+ * @author Mikołaj Kosiorek
+ */
+
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -13,6 +28,18 @@
 
 // HELPER FUNCTIONS
 
+/**
+ * @brief Initializes the Shared Memory structure with simulation parameters.
+ *
+ * Zeros out the memory block to prevent garbage data and sets the initial
+ * configuration constants derived from user input.
+ *
+ * @param shm Pointer to the attached SharedState structure.
+ * @param K   Maximum capacity of the conveyor belt (slots).
+ * @param M   Maximum allowed weight on the conveyor belt.
+ * @param W   Maximum weight capacity of a single truck.
+ * @param V   Maximum volume capacity of a single truck.
+ */
 void shm_init(SharedState *shm, int K, double M, double W, double V) {
   memset(shm, 0, sizeof(SharedState));
 
@@ -25,6 +52,21 @@ void shm_init(SharedState *shm, int K, double M, double W, double V) {
   shm->truck_docked = 0;
 }
 
+/**
+ * @brief Initializes the System V Semaphore set.
+ *
+ * Sets the initial values for the synchronization primitives required by the
+ * Producer-Consumer problem and Dock management.
+ *
+ * Initial Values:
+ * - @ref SEM_MUTEX : 1 (Binary, Critical Section Guard)
+ * - @ref SEM_EMPTY : K (Counting, Available Slots)
+ * - @ref SEM_FULL  : 0 (Counting, Items on Belt)
+ * - @ref SEM_DOCK  : 1 (Binary, Dock Availability)
+ *
+ * @param semid The ID of the semaphore set to initialize.
+ * @param K     The initial value for SEM_EMPTY (belt capacity).
+ */
 void sem_init(int semid, int K) {
   sem_set(semid, SEM_MUTEX, SETVAL, 1);
   sem_set(semid, SEM_EMPTY, SETVAL, K);
@@ -32,6 +74,31 @@ void sem_init(int semid, int K) {
   sem_set(semid, SEM_DOCK, SETVAL, 1);
 }
 
+/**
+ * @brief Main Entry Point.
+ *
+ * Orchestrates the entire simulation.
+ * usage: ./dispatcher <N> <K> <M> <W> <V>
+ *
+ * **Flow of Execution:**
+ * 1. Validates command-line arguments and checks system process limits (`sysconf`).
+ * 2. Opens/Creates `simulation.log` for child process output redirection.
+ * 3. Initializes Shared Memory and Semaphores.
+ * 4. Forks child processes:
+ * - **P4 (Express Worker):** Handles priority packages.
+ * - **P1-P3 (Standard Workers):** Generate standard packages.
+ * - **Trucks:** N consumer processes.
+ * *(Note: All children have stdout redirected to file via `dup2`)*.
+ * 5. Enters the Interactive Dispatcher Loop:
+ * - Command `1`: Force Truck Departure (SIGUSR1).
+ * - Command `2`: Trigger Express Load (SIGUSR1 to P4).
+ * - Command `3`: Graceful Shutdown (SIGTERM to all).
+ * 6. Waits for children and cleans up IPC.
+ *
+ * @param argc Argument count.
+ * @param argv Argument values (Simulation Parameters).
+ * @return 0 on success, exit code 1 on initialization failure.
+ */
 int main(int argc, char *argv[]) {
   if (argc < 6) {
     fprintf(stderr, "Usage: %s <N_Trucks> <K_BeltCap> <M_MaxBeltW> <W_TruckCap> <V_TruckVol>\n", argv[0]);
@@ -49,6 +116,14 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  // Check process count limit for truck
+  long max_sys_procs = sysconf(_SC_CHILD_MAX);
+
+  if (N > (max_sys_procs / 2)) { // Divided by 2 to leave some place for other programs
+    fprintf(stderr, "Requesting %d trucks (N_trucks) is close to system limit\n", N);
+    exit(1);
+  }
+  
   if (K > MAX_BELT_CAPACITY) {
     fprintf(stderr, "K cannot exceed internal buffer limit (%d).\n", MAX_BELT_CAPACITY);
     exit(1);
