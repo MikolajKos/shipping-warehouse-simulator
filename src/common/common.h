@@ -96,10 +96,10 @@ typedef struct {
  */
 typedef struct {
   /* Configuration set by main process */
-  int max_items_K;
-  double max_belt_weight_M;
-  double truck_capacity_W;
-  double truck_volume_V;
+  int max_items_K;      /**< Max number of items that can be placed on belt */
+  double max_belt_weight_M; /**< Max weight that belt can handle */
+  double truck_capacity_W;  /**< Specifies load weight that truck can handle */
+  double truck_volume_V;    /**< Specifies trucks volume capacity */
 
   /* System State */
   int shutdown;         /**< Flag to signal all process to terminate. */
@@ -109,14 +109,14 @@ typedef struct {
   Package belt[MAX_BELT_CAPACITY];
   int head;             /**< Index to pop from belt */
   int tail;             /**< Index to place intems into from belt (push) */
-  int current_count;
-  double current_belt_weight;
+  int current_count;    /**< Number of all packages currently on a belt */
+  double current_belt_weight; /**< Current belt weight */
 
   /* Truck Interface */
-  pid_t current_truck_pid;
-  int truck_docked;
-  double current_truck_load;
-  double current_truck_vol;
+  pid_t current_truck_pid; /**< PID of currently docked truck, so dispatcher can send signal to It */
+  int truck_docked;        /**< Flag for checking if truck is docked */
+  double current_truck_load; /**< Current truck load */
+  double current_truck_vol;  /**< Current truck volume */
   //int force_departure;  /**< Flag for early truck departure */
 
 } SharedState;
