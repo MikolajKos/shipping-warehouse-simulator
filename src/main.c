@@ -49,6 +49,14 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  // Check process count limit for truck
+  long max_sys_procs = sysconf(_SC_CHILD_MAX);
+
+  if (N > (max_sys_procs / 2)) { // Divided by 2 to leave some place for other programs
+    fprintf(stderr, "Requesting %d trucks (N_trucks) is close to system limit\n", N);
+    exit(1);
+  }
+  
   if (K > MAX_BELT_CAPACITY) {
     fprintf(stderr, "K cannot exceed internal buffer limit (%d).\n", MAX_BELT_CAPACITY);
     exit(1);
