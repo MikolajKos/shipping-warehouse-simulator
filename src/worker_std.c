@@ -9,6 +9,22 @@
 #include "common/shm_wrapper.h"
 #include "common/utils.h"
 
+/**
+ * @file worker_std.c
+ * @brief Standard Worker Process (Producer) - Generates Packages A, B, or C.
+ *
+ * This file implements the logic for a Standard Worker process.
+ * The worker acts as a **Producer** in the system, generating packages of a specific
+ * type (A, B, or C) and attempting to place them on the conveyor belt (Shared Memory).
+ *
+ * Key Responsibilities:
+ * - Continuously generating packages with randomized weights within defined bounds.
+ * - waiting for available slots on the belt (@ref SEM_EMPTY).
+ * - Enforcing the Maximum Belt Weight limit (M) before placing an item.
+ * - Updating the Circular Buffer (Push operation).
+ *
+ * @author Mikołaj Kosiorek
+ */
 int main(int argc, char *argv[]) {
   // Turn off buffering for real time logging to simulation.log file
   setbuf(stdout, NULL);

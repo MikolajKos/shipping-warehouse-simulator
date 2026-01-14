@@ -5,6 +5,7 @@ OUTPUT_DIRECTORY       = "@CMAKE_CURRENT_BINARY_DIR@/doc_output"
 INPUT                  = "@CMAKE_SOURCE_DIR@/src"
 RECURSIVE              = YES
 FILE_PATTERNS          = *.c *.h
+FULL_PATH_NAMES        = NO
 
 # Generator options
 EXTRACT_ALL            = YES
@@ -19,3 +20,4 @@ GENERATE_HTML          = YES
 HTML_TIMESTAMP         = YES
 USE_MATHJAX            = YES
 OPTIMIZE_OUTPUT_FOR_C  = YES
+

@@ -1,3 +1,20 @@
+/**
+ * @file truck.c
+ * @brief Truck Process (Consumer) - Smart Loading & Delivery Simulation.
+ *
+ * This file implements the logic for a Truck process, acting as a **Consumer** in the system.
+ *
+ * Key behaviors:
+ * - **Docking Queue:** Competes for the single Loading Dock (@ref SEM_DOCK).
+ * - **Smart Loading:** "Peeks" at the conveyor belt to check if the next package fits
+ * within remaining weight/volume limits.
+ * - **Signal Responsiveness:** Uses non-blocking semaphore operations (`IPC_NOWAIT`)
+ * to check for `SIGUSR1` (Forced Departure) even when the belt is empty.
+ * - **Delivery Cycle:** Simulates travel time after loading and returns to the queue.
+ *
+ * @author Mikołaj Kosiorek
+ */
+
 #include <signal.h>
 #include <stdio.h>
 #include <time.h>
@@ -8,13 +25,55 @@
 #include "common/shm_wrapper.h"
 #include "common/utils.h"
 
+/**
+ * @brief Flag indicating a forced departure request.
+ *
+ * Set to 1 by the signal handler when `SIGUSR1` is received from the Dispatcher.
+ * volatile is used to prevent compiler optimization, ensuring visibility in the main loop.
+ */
 volatile sig_atomic_t force_departure = 0;
 
+/**
+ * @brief Signal Handler for SIGUSR1.
+ *
+ * Handles the "Force Departure" command. It sets the global flag, allowing the
+ * truck to break out of the loading loop and depart immediately.
+ *
+ * @param sig Signal number (SIGUSR1).
+ */
 void handle_sigusr1(int sig) {
   (void)sig; // Satisfies compiler
   force_departure = 1;
 }
 
+/**
+ * @brief Main Entry Point for Truck Process.
+ *
+ * Usage: ./truck <ID>
+ *
+ * **Algorithm Flow:**
+ * 1. Setup: Validates args, disables buffering, registers signal handler, attaches IPC.
+ * 2. **Outer Loop (Delivery Cycle):**
+ * - **Docking:** Waits for `SEM_DOCK` to enter the loading bay.
+ * - **Registration:** Writes its PID to Shared Memory so Dispatcher can signal it.
+ * - **Inner Loop (Loading):**
+ * - Checks `force_departure` flag.
+ * - Checks if truck is full (Capacity limits).
+ * - **Polling:** Tries to decrease `SEM_FULL` (wait for package) using `IPC_NOWAIT`.
+ * - *Reason:* If we used a blocking wait, the truck would hang on an empty belt
+ * and ignore the forced departure signal.
+ * - **Peek & Check:** Enters Critical Section (`SEM_MUTEX`), reads the package at `head`.
+ * - If package fits: Consumes it (Updates `head`, `count`, `truck_load`).
+ * - If package doesn't fit: Leaves it on belt, releases mutex, and departs (Truck Full).
+ * - **Undocking:** Releases `SEM_DOCK` and clears PID from Shared Memory.
+ * - **Edge Case:** If forced to depart while empty, drives back to queue immediately.
+ * - **Delivery:** Sleeps for 5 seconds to simulate transport.
+ * - Returns to queue.
+ *
+ * @param argc Argument count.
+ * @param argv Argument values. argv[1] is the Truck ID.
+ * @return 0 on success.
+ */
 int main(int argc, char *argv[]) {
   // Turn off buffering for real time logging to simulation.log file
   setbuf(stdout, NULL);
@@ -79,8 +138,7 @@ int main(int argc, char *argv[]) {
     while (1) {
       if (force_departure) {
 	get_time(time_buf, sizeof(time_buf));
-	printf("["COLOR_YELLOW"%s"COLOR_RESET"]"COLOR_CYAN" Truck %d  "COLOR_RESET"Forced departure signal received.\n", time_buf, truck_id);
-	
+	printf("["COLOR_YELLOW"%s"COLOR_RESET"]"COLOR_CYAN" Truck %d  "COLOR_RESET"Forced departure signal received.\n", time_buf, truck_id);	
 	break;
       }
 
