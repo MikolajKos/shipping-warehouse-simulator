@@ -66,18 +66,33 @@ Zgodnie z wymaganiami przeprowadzono serię testów weryfikujących logikę:
 
 Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących wymagania systemowe:
 
-* **a. Tworzenie i obsługa plików (open, dup2):**
-    * [Przekierowanie logów w main.c]([LINK_DO_TWOJEGO_REPO]/blob/main/src/main.c#L[LINIA])
-* **b. Tworzenie procesów (fork, exec, exit, wait):**
-    * [Pętla tworząca workerów w main.c]([LINK_DO_TWOJEGO_REPO]/blob/main/src/main.c#L[LINIA])
-* **c. Obsługa sygnałów (kill, sigaction):**
-    * [Handler sygnałów w truck.c]([LINK_DO_TWOJEGO_REPO]/blob/main/src/truck.c#L[LINIA])
-    * [Wysłanie sygnału przez Dispatchera]([LINK_DO_TWOJEGO_REPO]/blob/main/src/main.c#L[LINIA])
-* **d. Synchronizacja procesów (semafory System V):**
-    * [Inicjalizacja semaforów]([LINK_DO_TWOJEGO_REPO]/blob/main/src/common/sem_wrapper.c#L[LINIA])
-    * [Operacje P/V (wait/signal)]([LINK_DO_TWOJEGO_REPO]/blob/main/src/common/sem_wrapper.c#L[LINIA])
-* **e. Segmenty pamięci dzielonej (shmget, shmat):**
-    * [Struktura SharedState w common.h]([LINK_DO_TWOJEGO_REPO]/blob/main/src/common/common.h#L[LINIA])
-    * [Dołączenie pamięci w worker_std.c]([LINK_DO_TWOJEGO_REPO]/blob/main/src/worker_std.c#L[LINIA])
-* **f. Inne (Wątki/Kolejki/Potoki - jeśli użyto):**
-    * *(W tym projekcie nie używano wątków ani kolejek komunikatów, zgodnie z wyborem semaforów + SHM)*.
+* **a. Walidacja poprawności wprowadzanych danych:**
+    * [Walidacja wprowadzanych parametrów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L103-L130)
+    * [Sprawdzenie, czy liczba procesów nie przekroczy systemowego limitu](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L119-L125)
+* **b. Tworzenie i obsługa plików (open, dup2):**
+    * [Tworzenie deskryptora dla wyjścia logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L136)
+    * [Przekierowanie logów w main.c](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L164)
+* **c. Tworzenie procesów (fork, exec, exit, wait):**
+    * [Pętle tworzące procesy potomne (fork, exec)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L158-L198)
+    * [Oczekiwanie na zakończenie pracy procesów (wait)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L269)
+* **d. Obsługa sygnałów (kill, sigaction):**
+    * [Handler sygnałów w truck.c](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/truck.c#L28-L47)
+    * [Wysłanie sygnału przez Dispatchera do truck](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L217-L227)
+    * [Handler sygnałów w worker_express.c](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_express.c#L28-L46)
+    * [Wysyłanie sygnału przez Dispatchera do worker_express](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L235-L241)
+    * [Zamknięcie symulacji przez usunięcie procesów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L242-L261)
+* **e. Synchronizacja procesów (semafory System V):**
+    * [Inicjalizacja semaforów w main.c](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L70-L75)
+    * [Zabezpieczenie przed blokowaniem procesu truck](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/truck.c#L155-L168)
+    * [Operacje P/V (wait/signal)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/common/sem_wrapper.c#L10-L21)
+    * [Statyczna biblioteka pomocnicza (sem_wrapper)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/common/sem_wrapper.h)
+* **f. Segmenty pamięci dzielonej (shmget, shmat):**
+    * [Struktura SharedState w common.h](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/common/common.h#L97-L122)
+    * [Dołączenie pamięci w worker_std.c](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L47-L54)
+    * [Statyczna biblioteka pomocnicza (shm_wrapper)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/common/shm_wrapper.h)
+* **g. Funkcje pomocnicze utils (generowanie przesyłek, pobieranie czasu):**
+    * [Plik utils.h zawierający funkcje pomocnicze](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/common/utils.h)
+* **h. Inne:**
+    * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
+    * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
