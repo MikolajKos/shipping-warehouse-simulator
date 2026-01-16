@@ -49,6 +49,8 @@ Podczas realizacji projektu napotkano następujące wyzwania:
 * **Konfiguracja przez CMake:** Możliwość sterowania prędkością symulacji bez zmiany kodu źródłowego.
 * **Testy integracyjne:** Zastosowanie frameworka **GoogleTest** do weryfikacji logiki biznesowej (np. czy ciężarówka nie zabiera paczki przekraczającej jej udźwig).
 * **Kolorowanie logów:** Użycie kodów ANSI w pliku logów, co po otwarciu przez `tail -f` daje czytelny, kolorowy podgląd sytuacji.
+* **Dokumentacja Doxygen:** Implementacja profesjonalnego generatora dokumentacji.
+* **Publikacja Dokumentacji (FTP):** Umiesznienie dokumentacji projektowej przez FTP na mojej prywatnej domenie [Dokumentacja Online](https://mkosiorek.pl/docs/warehouse_sim/files.html).
 
 ## 5. Testy i weryfikacja wymagań
 
@@ -95,4 +97,5 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
 * **h. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
