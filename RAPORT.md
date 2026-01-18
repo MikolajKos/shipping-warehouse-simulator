@@ -52,17 +52,24 @@ Podczas realizacji projektu napotkano następujące wyzwania:
 * **Dokumentacja Doxygen:** Implementacja profesjonalnego generatora dokumentacji.
 * **Publikacja Dokumentacji (FTP):** Umiesznienie dokumentacji projektowej przez FTP na mojej prywatnej domenie [Dokumentacja Online](https://mkosiorek.pl/docs/warehouse_sim/files.html).
 
-## 5. Testy i weryfikacja wymagań
+## Tabela 5. Scenariusze testowe i oczekiwane rezultaty
 
-Zgodnie z wymaganiami przeprowadzono serię testów weryfikujących logikę:
-
-| Nr | Nazwa Testu | Opis scenariusza | Oczekiwany rezultat |
-|----|-------------|------------------|---------------------|
-| 1 | **Limit Taśmy (K)** | Uruchomienie z małym K (np. 2). Pracownicy próbują wrzucić 5 paczek. | Pracownicy blokują się po wrzuceniu 2 paczek, czekając aż Ciężarówka zwolni miejsce. (Brak przepełnienia bufora). |
-| 2 | **Maksymalna Waga (M)** | Ustawienie limitu wagi M mniejszego niż waga paczki C. | Pracownik próbujący wrzucić paczkę C czeka, aż suma wag na taśmie spadnie poniżej progu pozwalającego na dodanie C. |
-| 3 | **Odjazd i wymiana** | Ciężarówka zapełnia swoją pojemność (V) lub wagę (W). | Ciężarówka komunikuje odjazd, znika z systemu, a po chwili pojawia się nowa (lub ta sama wraca) z pustą paką. |
-| 4 | **Priorytet Express (P4)** | Taśma pełna (K/K). Użytkownik wysyła komendę "Express Load". | P4 czeka, aż zwolni się *jedno* miejsce, po czym zajmuje je *przed* pracownikami standardowymi (dzięki priorytetowemu dostępowi do semafora lub logice Dispatchera). |
-| 5 | **Wymuszony odjazd** | Ciężarówka jest w połowie pełna. Użytkownik wysyła sygnał 1 (SIGUSR1). | Ciężarówka natychmiast przerywa załadunek i odjeżdża z obecnym stanem towaru. |
+| Nr | Plik źródłowy | Nazwa Testu (Funkcja) | Opis scenariusza | Oczekiwany rezultat |
+|:--:|:---|:---|:---|:---|
+| **1** | `test_worker_std.cpp` | `PlacesPackagesIfSpaceEmpty` | Pracownik standardowy uruchamia się, gdy na taśmie są wolne sloty (`SEM_EMPTY > 0`). | Waga taśmy wzrasta powyżej `0.0` (paczka została poprawnie dodana do bufora). |
+| **2** | `test_worker_std.cpp` | `BeltsWeightLimitReachedCantPlace` | Ustawienie limitu wagi taśmy (M) na `0.0`. Pracownik próbuje dodać nową paczkę. | Waga taśmy pozostaje `0.0`. Pracownik nie umieszcza paczki, respektując limit M. |
+| **3** | `test_worker_std.cpp` | `BlockIfBeltIsFull` | Brak wolnych miejsc na taśmie (`SEM_EMPTY` ustawiony na 0). Uruchomienie procesu pracownika. | Licznik paczek (`current_count`) nie zmienia się – proces pracownika zostaje zablokowany na semaforze. |
+| **4** | `test_worker_express.cpp` | `IgnoresSignalWhenNoTruck` | Wysłanie sygnału `SIGUSR1` do pracownika Express, gdy w doku brak ciężarówki (`truck_docked = 0`). | Ładunek ciężarówki pozostaje `0.0`. Pracownik ignoruje sygnał i nie ładuje towaru "w próżnię". |
+| **5** | `test_worker_express.cpp` | `LoadsPackagesWhenTruckDocked` | Wysłanie sygnału `SIGUSR1` do pracownika Express, gdy ciężarówka jest poprawnie zadokowana. | Ładunek ciężarówki (`current_truck_load`) oraz zajęta objętość wzrastają powyżej `0`. |
+| **6** | `test_worker_express.cpp` | `SkipPackagesIfLimitReached` | Pracownik Express próbuje załadować paczkę, która przekracza pozostałą ładowność ciężarówki. | Ładunek ciężarówki nie przekracza maksymalnej pojemności (`truck_capacity_W`). Nadmiarowa paczka jest pomijana. |
+| **7** | `test_truck.cpp` | `LoadingAllPackages` | Na taśmie znajduje się 5 paczek. Ciężarówka podjeżdża do doku. | Ciężarówka pobiera wszystkie paczki. Jej końcowy ładunek jest równy sumie wag paczek z taśmy. |
+| **8** | `test_truck.cpp` | `PkgLoadingAndDeparture` | Ciężarówka zapełnia się, odjeżdża (symulacja czasu dostawy) i wraca do kolejki. | Po powrocie zmienne współdzielone ciężarówki (`load`, `vol`) są resetowane do `0.0` (ciężarówka jest pusta). |
+| **9** | `test_truck.cpp` | `RespectsVolumeLimits` | Paczki na taśmie mieszczą się w limicie wagowym, ale przekraczają limit objętości (V). | Załadowana zostaje tylko ta część paczek, która mieści się w limicie objętości. Reszta pozostaje na taśmie. |
+| **10** | `test_truck.cpp` | `ForcedDepartureBySignal` | Wysłanie sygnału `SIGUSR1` (wymuszony odjazd) w trakcie trwania załadunku (gdy na taśmie wciąż są paczki). | Ciężarówka przerywa pętlę ładowania, zwalnia dok (`truck_docked = 0`) i odjeżdża z częściowym ładunkiem. |
+| **11** | `test_truck.cpp` | `SkipOversizedPackage` | Na taśmie (jako pierwsza) znajduje się paczka cięższa niż całkowita ładowność ciężarówki. | Ciężarówka nie ładuje paczki (`load = 0.0`), pozostawiając ją na taśmie. Algorytm "Peek & Check" działa poprawnie. |
+| **12** | `test_truck.cpp` | `NextTruckLoadsFirstItem` | Pierwsza ciężarówka nie zabiera paczki z powodu braku miejsca/odjazdu. Podjeżdża druga ciężarówka. | Druga ciężarówka pobiera tę samą paczkę (zachowanie kolejki FIFO bufora cyklicznego). |
+| **13** | `test_utils.cpp` | `GeneratedWeightIsWithinBounds` | Test jednostkowy funkcji generującej wagi dla typu paczki `PKG_C`. | Wygenerowana waga mieści się w zdefiniowanym przedziale `[0.1, 25.0]`. |
+| **14** | `test_utils.cpp` | `VolumeZeroForUnknownType` | Przekazanie nieprawidłowego identyfikatora typu paczki do funkcji obliczającej objętość. | Funkcja zwraca bezpieczną wartość `0.0` (obsługa błędów). |
 
 ## 6. Linki do kodu (GitHub)
 
@@ -97,5 +104,6 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
 * **h. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
 
