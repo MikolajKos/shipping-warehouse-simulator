@@ -38,7 +38,7 @@ Podczas realizacji projektu napotkano następujące wyzwania:
 
 2.  **Szybkość symulacji:**
     * *Objaw:* Procesy wykonywały się zbyt szybko dla ludzkiego oka.
-    * *Rozwiązanie:* Wprowadzono flagę kompilacji CMake `-DSIM_DELAY_MS`, która wstrzykuje opóźnienia (`nanosleep`) do pętli procesów, umożliwiając analizę logów w czasie rzeczywistym.
+    * *Rozwiązanie:* Wprowadzono flagę kompilacji CMake `-DSIM_DELAY_MS`, która wstrzykuje opóźnienia (`usleep`) do pętli procesów, umożliwiając analizę logów w czasie rzeczywistym.
 
 3.  **Ryzyko zakleszczenia (Deadlock) przy zatrzymywaniu:**
     * *Objaw:* Przy sygnale kończącym, procesy wiszące na semaforach (np. czekające na paczkę) nie kończyły się.
@@ -104,6 +104,7 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
 * **h. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
 
 
