@@ -20,7 +20,7 @@ Celem projektu było stworzenie symulacji działania magazynu firmy spedycyjnej 
 
 Kod projektu został podzielony na moduły zgodnie z zasadą separacji odpowiedzialności:
 
-* **Dispatcher (`main.c`):** Inicjalizuje zasoby IPC, tworzy procesy potomne (N Ciężarówek, 3 Pracowników Standardowych, 1 Express) i obsługuje interfejs CLI (komendy użytkownika). Reaguje na sygnały `SIGINT` (bezpieczne zamknięcie).
+* **Dispatcher (`main.c`):** Inicjalizuje zasoby IPC, tworzy procesy potomne (N Ciężarówek, 3 Pracowników Standardowych, 1 Express) i obsługuje interfejs CLI (komendy użytkownika).
 * **Pracownicy (`worker_std.c`, `worker_express.c`):** Procesy cyklicznie generujące paczki.
     * *Worker Standard:* Produkuje paczki A, B, C zgodnie z ograniczeniami wagi taśmy (M) i pojemności (K).
     * *Worker Express:* Czeka na sygnał `SIGUSR1` od Dispatchera, aby załadować priorytetową paczkę, omijając standardową kolejkę (jeśli jest miejsce fizyczne).
@@ -104,6 +104,7 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
 * **h. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
 
 
