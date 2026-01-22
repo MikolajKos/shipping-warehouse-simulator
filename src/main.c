@@ -74,6 +74,13 @@ void sem_init(int semid, int K) {
   sem_set(semid, SEM_DOCK, SETVAL, 1);
 }
 
+volatile sig_atomic_t exit_request = 0;
+
+void handle_shutdown_signal(int sig) {
+  (void)sig;
+  exit_request = 1;
+}
+
 /**
  * @brief Main Entry Point.
  *
@@ -206,6 +213,14 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // SIGTERM handler definition
+  struct sigaction sa_term;
+  sa_term.sa_handler = handle_shutdown_signal;
+  sigemptyset(&sa_term.sa_mask);
+  sa_term.sa_flags = 0;
+  sigaction(SIGTERM, &sa_term, NULL);
+  sigaction(SIGINT, &sa_term, NULL);
+
   // --- Dispatcher Loop ---
   int cmd;
   char time_buf[64];
@@ -213,14 +228,28 @@ int main(int argc, char *argv[]) {
   printf("\nCommands:\n 1: Force Truck Departure\n 2: Express Load (P4)\n 3: Shutdown\n");
 
   while(1) {
-    printf("CMD> ");
-    fflush(stdout);
+    // Forcing cmd 3 if SIGTERM/INT was called before scanf
+    if (exit_request) {
+      cmd = 3;
+      printf("\nTermination signal recived\n");
+    }
+    else {
+      printf("CMD> ");
+      fflush(stdout);
 
-    if (scanf("%d", &cmd) != 1) {
-      // Consume garbage
-      while(getchar() != '\n');
-      printf("Incorrect intput. Enter command number\n");
-      continue;
+      int scanf_res = scanf("%d", &cmd);
+
+      // Signal broke scanf work, set shutdown cmd
+      if (exit_request) {
+	cmd = 3;
+	printf("\nTermination signal recived\n");
+      }
+      else if (scanf_res != 1) {
+	// Consume garbage
+	while(getchar() != '\n');
+	printf("Incorrect intput. Enter command number\n");
+	continue;
+      }
     }
 
     if (cmd == 1) {

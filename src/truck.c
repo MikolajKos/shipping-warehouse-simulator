@@ -78,6 +78,10 @@ int main(int argc, char *argv[]) {
   // Turn off buffering for real time logging to simulation.log file
   setbuf(stdout, NULL);
 
+  // Ignoring SIGINT/TERM so dispatcher can terminate child processes gracefully
+  signal(SIGINT, SIG_IGN);
+  signal(SIGTERM, SIG_IGN);
+
   // Validate Arguments
   if (argc < 2) {
     fprintf(stderr, "Usage: %s <ID>\n", argv[0]);
@@ -120,7 +124,8 @@ int main(int argc, char *argv[]) {
     // When truck wakes up while docked, check if simulation wasn't terminated
     if (shm->shutdown) {
       SEM_V(semid, SEM_DOCK); // Give access to dispatcher
-      break;
+      // Truck is empty before entering loading loop, we can terminate process
+      exit(0);
     }
 
     // Critical Part
