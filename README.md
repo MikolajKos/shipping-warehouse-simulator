@@ -47,7 +47,7 @@ The simulation consists of three main entities sharing a memory block:
 
 * **OS:** Linux (requires System V IPC support).
 * **Compiler:** GCC or Clang (supporting C11).
-* **Build System:** CMake (3.10 or higher).
+* **Build System:** CMake (3.25 or higher).
 * **Testing:** GoogleTest (automatically fetched or installed globally).
 
 ## 🔨 Build Instructions
