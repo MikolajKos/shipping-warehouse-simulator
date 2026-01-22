@@ -82,6 +82,7 @@ make
 ## 🖥 Usage
 Run the simulation from the build directory. You must provide the configuration parameters:
 ```bash
+cd build/src
 ./warehouse_sim <N_Trucks> <K_BeltCapacity> <M_MaxBeltWeight> <W_TruckWeight> <V_TruckVolume>
 ```
 
