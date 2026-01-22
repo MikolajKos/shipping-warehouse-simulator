@@ -103,7 +103,7 @@ void load_express_packages(SharedState *shm, int count) {
 int main() {
   // Turn off buffering for real time logging to simulation.log file
   setbuf(stdout, NULL);
-  
+
   // Register signal handler
   struct sigaction sa;
   sa.sa_handler = handle_sigusr1;
