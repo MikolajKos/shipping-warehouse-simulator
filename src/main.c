@@ -166,6 +166,9 @@ int main(int argc, char *argv[]) {
     execl("./worker_express", "worker_express", NULL);
     perror("Exec P4"); exit(1);
   }
+  else if (pid_p4 == -1) {
+    perror("Fork P4"); exit(1);
+  }
   shm->p4_pid = pid_p4;
   
   // Workers: P1, P2, P3 (Standard)
@@ -179,6 +182,9 @@ int main(int argc, char *argv[]) {
       
       execl("./worker_std", "worker_std", types[i], NULL);
       perror("Exec Worker"); exit(1);
+    }
+    else if (workers[i] == -1) {
+      perror("Fork Worker"); exit(1);
     }
   }
 
@@ -194,6 +200,9 @@ int main(int argc, char *argv[]) {
       sprintf(id_str, "%d", i+1);
       execl("./truck", "truck", id_str, NULL);
       perror("Exec Truck"); exit(1);
+    }
+    else if(trucks[i] == -1) {
+      perror("Fork Truck"); exit(1);
     }
   }
 
@@ -243,6 +252,13 @@ int main(int argc, char *argv[]) {
       get_time(time_buf, sizeof(time_buf));
       printf("["COLOR_RED"%s"COLOR_RESET"]"COLOR_BLUE"  Dispatcher "COLOR_RESET"Shutting down...\n", time_buf);
 
+      // Set shutdown and block the dock, so last truck will deliver packages and then kill all processses
+      SEM_P(semid, SEM_MUTEX);
+      shm->shutdown = 1;
+      SEM_V(semid, SEM_MUTEX);
+
+      SEM_P(semid, SEM_DOCK);
+      
       // Kills P1, P2 and P3
       for(int i=0; i<3; ++i) {
 	kill(workers[i], SIGTERM);
@@ -253,8 +269,7 @@ int main(int argc, char *argv[]) {
       printf(" -> ["COLOR_YELLOW"-"COLOR_RESET"]  Worker: P4 (Express)\n");
       // Kills trucks
       for(int i=0; i<N; ++i) {
-	kill(trucks[i], SIGTERM);
-	printf(" -> ["COLOR_YELLOW"-"COLOR_RESET"]  Truck: %d\n", i+1);
+	SEM_V(semid, SEM_DOCK); // Lets truck die naturally
       }
 
       break;
@@ -265,8 +280,22 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Wait for child processes to end its work
-  while(wait(NULL) > 0);
+  // Wait for child processes to end its work and print truck info
+  pid_t ended_pid;
+  while ((ended_pid = wait(NULL)) > 0) {
+    // Check if pid belongs to a truck
+    int found_truck = -1;
+    for (int i=0; i<N; ++i) {
+      if (trucks[i] == ended_pid) {
+	found_truck = i+1; // Get truck number
+	break;
+      }
+    }
+
+    if (found_truck != -1) {
+      printf(" -> ["COLOR_YELLOW"-"COLOR_RESET"]  Truck: %d\n", found_truck);
+    }
+  }
   
   // Destructing IPC and allocated mem
   free(trucks);
