@@ -6,6 +6,25 @@
 
 ---
 
+## Środowisko deweloperskie i wymagania
+
+Projekt został zaimplementowany i przetestowany w środowisku systemu Linux. Do poprawnej kompilacji i uruchomienia symulacji wymagane są następujące narzędzia oraz biblioteki systemowe zgodne ze standardem POSIX.
+
+**Specyfikacja środowiska:**
+* **System operacyjny:** Linux (testowano na dystrybucji Linux Mint/Ubuntu, kernel 5.x+).
+* **Kompilator:** GCC (GNU Compiler Collection) ze wsparciem dla standardu **C11** (flaga `-std=gnu11`).
+* **System budowania:** **CMake** (wersja min. 3.25) – służy do automatyzacji procesu kompilacji.
+* **Biblioteki:**
+    * `pthread` (POSIX Threads) – wymagana do GoogleTests.
+    * Standardowe biblioteki systemowe: `<sys/ipc.h>`, `<sys/shm.h>`, `<sys/sem.h>`, `<sys/wait.h>`, `<unistd.h>`, `<signal.h>`.
+
+**Instalacja zależności (Debian/Ubuntu/Mint):**
+Aby przygotować czyste środowisko do pracy, należy zainstalować kompilator oraz narzędzie CMake:
+```bash
+sudo apt update
+sudo apt install build-essential cmake git
+```
+
 ## 1. Założenia projektowe
 
 Celem projektu było stworzenie symulacji działania magazynu firmy spedycyjnej w środowisku systemu Linux, wykorzystując mechanizmy programowania współbieżnego i komunikacji międzyprocesowej (IPC). Zgodnie z wymaganiami, unikano rozwiązań scentralizowanych na poziomie logiki biznesowej – każdy proces (Ciężarówka, Pracownik) jest osobnym procesem podejmującym autonomiczne decyzje w oparciu o stan pamięci dzielonej.
@@ -104,6 +123,7 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
 * **h. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
 
 
