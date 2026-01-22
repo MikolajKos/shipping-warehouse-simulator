@@ -117,6 +117,12 @@ int main(int argc, char *argv[]) {
     // Dock Truck
     SEM_P(semid, SEM_DOCK);
 
+    // When truck wakes up while docked, check if simulation wasn't terminated
+    if (shm->shutdown) {
+      SEM_V(semid, SEM_DOCK); // Give access to dispatcher
+      break;
+    }
+
     // Critical Part
     SEM_P(semid, SEM_MUTEX);
 
@@ -137,19 +143,19 @@ int main(int argc, char *argv[]) {
     // Loading Loop
     while (1) {
       if (force_departure) {
-	get_time(time_buf, sizeof(time_buf));
-	printf("["COLOR_YELLOW"%s"COLOR_RESET"]"COLOR_CYAN" Truck %d  "COLOR_RESET"Forced departure signal received.\n", time_buf, truck_id);	
-	break;
+	      get_time(time_buf, sizeof(time_buf));
+	      printf("["COLOR_YELLOW"%s"COLOR_RESET"]"COLOR_CYAN" Truck %d  "COLOR_RESET"Forced departure signal received.\n", time_buf, truck_id);	
+	      break;
       }
 
       if (shm->shutdown) break;
 
-      // case: Limit is reached exactly (eg. truck load: 20/20 kg)
+      // case: Limit is reached exactly (truck load: 20/20 kg)
       if (shm->current_truck_load >= shm->truck_capacity_W ||
-	  shm->current_truck_vol >= shm->truck_volume_V) {
-	get_time(time_buf, sizeof(time_buf));
-	printf("["COLOR_GREEN"%s"COLOR_RESET"]"COLOR_CYAN" Truck %d  "COLOR_RESET"Truck filled to capacity. Departure...\n", time_buf, truck_id);
-	break;
+	        shm->current_truck_vol >= shm->truck_volume_V) {
+	      get_time(time_buf, sizeof(time_buf));
+	      printf("["COLOR_GREEN"%s"COLOR_RESET"]"COLOR_CYAN" Truck %d  "COLOR_RESET"Truck filled to capacity. Departure...\n", time_buf, truck_id);
+	      break;
       }
       
       // Waiting For Packages (SEM_FULL)
@@ -158,13 +164,13 @@ int main(int argc, char *argv[]) {
       // IPC_NOWAIT flag must be set up so we can regularly check if departure is being forced
       struct sembuf sb = {SEM_FULL, -1, IPC_NOWAIT};
       if(semop(semid, &sb, 1) == -1) {
-	if (errno == EAGAIN) {
-	  usleep(50000); // Waits 50ms to avoid busy loop slamming
-	  continue;
-	} else {
-	  perror("Truck semop");
-	  exit(1);
-	}
+        if (errno == EAGAIN) {
+          usleep(50000); // Waits 50ms to avoid busy loop slamming
+          continue;
+        } else {
+          perror("Truck semop");
+          exit(1);
+        }
       }
 
       // Package Available
@@ -179,13 +185,13 @@ int main(int argc, char *argv[]) {
 
       // Reached Truck Load Limits Check
       if (shm->current_truck_load + w > shm->truck_capacity_W ||
-	  shm->current_truck_vol + v > shm->truck_volume_V) {
-	get_time(time_buf, sizeof(time_buf));
-	printf("["COLOR_GREEN"%s"COLOR_RESET"]"COLOR_CYAN" Truck %d  "COLOR_RESET"Truck is full. Departure...\n",
-	       time_buf, truck_id);
-	SEM_V(semid, SEM_FULL); // Truck didn't load head package so it is still on belt
-	SEM_V(semid, SEM_MUTEX);
-	break;
+          shm->current_truck_vol + v > shm->truck_volume_V) {
+        get_time(time_buf, sizeof(time_buf));
+        printf("["COLOR_GREEN"%s"COLOR_RESET"]"COLOR_CYAN" Truck %d  "COLOR_RESET"Truck is full. Departure...\n",
+              time_buf, truck_id);
+        SEM_V(semid, SEM_FULL); // Truck didn't load head package so it is still on belt
+        SEM_V(semid, SEM_MUTEX);
+        break;
       }
 
       // Limit NOT Reached
