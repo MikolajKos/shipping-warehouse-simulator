@@ -11,12 +11,14 @@
 Projekt został zaimplementowany i przetestowany w środowisku systemu Linux. Do poprawnej kompilacji i uruchomienia symulacji wymagane są następujące narzędzia oraz biblioteki systemowe zgodne ze standardem POSIX.
 
 **Specyfikacja środowiska:**
-* **System operacyjny:** Linux (testowano na dystrybucji Linux Mint/Ubuntu, kernel 5.x+).
+* **System operacyjny:** Linux (testowano na dystrybucji Linux Mint/Ubuntu).
 * **Kompilator:** GCC (GNU Compiler Collection) ze wsparciem dla standardu **C11** (flaga `-std=gnu11`).
 * **System budowania:** **CMake** (wersja min. 3.25) – służy do automatyzacji procesu kompilacji.
 * **Biblioteki:**
     * `pthread` (POSIX Threads) – wymagana do GoogleTests.
     * Standardowe biblioteki systemowe: `<sys/ipc.h>`, `<sys/shm.h>`, `<sys/sem.h>`, `<sys/wait.h>`, `<unistd.h>`, `<signal.h>`.
+* **Edytor kodu (IDE):** **GNU Emacs** – środowisko wykorzystane do implementacji projektu.
+> **Uwaga:** Projekt wykorzystuje moduł `FetchContent`. Podczas pierwszego uruchomienia polecenia `cmake ..`, system automatycznie pobierze i skompiluje bibliotekę **GoogleTest** z repozytorium GitHub. Wymagane jest aktywne połączenie z internetem.
 
 **Instalacja zależności (Debian/Ubuntu/Mint):**
 Aby przygotować czyste środowisko do pracy, należy zainstalować kompilator oraz narzędzie CMake:
@@ -28,6 +30,7 @@ sudo apt install build-essential cmake git
 ## Instrukcje budowania
 Poniżej znajduje się kompletna instrukcja zawierająca sekwencję instrukcji niezbędnych do budowy projektu.
 ```bash
+mkdir build
 cd build
 cmake ..
 cmake --build .
@@ -134,14 +137,14 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
     * [Tworzenie deskryptora dla wyjścia logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L136)
     * [Przekierowanie logów w main.c](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L164)
 * **c. Tworzenie procesów (fork, exec, exit, wait):**
-    * [Pętle tworzące procesy potomne (fork, exec)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L158-L198)
-    * [Oczekiwanie na zakończenie pracy procesów (wait)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L269)
+    * [Pętle tworzące procesy potomne (fork, exec)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/main.c#L165-L214)
+    * [Oczekiwanie na zakończenie pracy procesów z wypisywaniem (wait)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/main.c#L312-L327)
 * **d. Obsługa sygnałów (kill, sigaction):**
     * [Handler sygnałów w truck.c](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/truck.c#L28-L47)
-    * [Wysłanie sygnału przez Dispatchera do truck](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L217-L227)
+    * [Wysłanie sygnału przez Dispatchera do truck](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/main.c#L255-L272)
     * [Handler sygnałów w worker_express.c](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_express.c#L28-L46)
-    * [Wysyłanie sygnału przez Dispatchera do worker_express](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L235-L241)
-    * [Zamknięcie symulacji przez usunięcie procesów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L242-L261)
+    * [Wysyłanie sygnału przez Dispatchera do worker_express](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/main.c#L273-L279)
+    * [Zamknięcie symulacji przez usunięcie procesów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/main.c#L280-L305)
 * **e. Synchronizacja procesów (semafory System V):**
     * [Inicjalizacja semaforów w main.c](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/main.c#L70-L75)
     * [Zabezpieczenie przed blokowaniem procesu truck](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/truck.c#L155-L168)
@@ -153,9 +156,18 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
     * [Statyczna biblioteka pomocnicza (shm_wrapper)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/common/shm_wrapper.h)
 * **g. Funkcje pomocnicze utils (generowanie przesyłek, pobieranie czasu):**
     * [Plik utils.h zawierający funkcje pomocnicze](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/common/utils.h)
-* **h. Inne:**
+* **h. Zagadnienia powiązane z tematem projektu:**
+    * [Ładowanie paczki do ciężarówki](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/truck.c#L203-L216)
+    * [Sprawdzenie limitu ciężarówki](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/truck.c#L191-L200)
+    * [Położenie paczki na taśmę (Standard Worker)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/worker_std.c#L108-L129)
+    * [Sprawdzenie limitu taśmy](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/worker_std.c#L83-L105)
+    * [Położenie paczki na taśmę (Express Worker P4)](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/worker_express.c#L64-L82)
+    * [Oczekiwanie Express Workera na sygnał wybudzający](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/worker_express.c#L128-L133)
+    * [Miejsce naturalnego usunięcia procesów ciężarówek](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/579bb111569328b60d644c373aa45ef896d532a6/src/truck.c#L122-L129)
+* **i. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
 
 
