@@ -1,5 +1,6 @@
 # Raport z projektu: Systemy Operacyjne
-[Dokumentacja Online](https://mkosiorek.pl/docs/warehouse_sim/files.html)
+[Dokumentacja Online](https://mkosiorek.pl/docs/warehouse_sim/files.html)\
+[GitHub Repo](https://github.com/MikolajKos/shipping-warehouse-simulator)
 
 **Autor:** Mikołaj Kosiorek\
 **Nr albumu:** 155281\
@@ -180,6 +181,7 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
 * **i. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
 
 
