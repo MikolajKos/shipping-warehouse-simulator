@@ -83,12 +83,12 @@ make
 Run the simulation from the build directory. You must provide the configuration parameters:
 ```bash
 cd build/src
-./warehouse_sim <N_Trucks> <K_BeltCapacity> <M_MaxBeltWeight> <W_TruckWeight> <V_TruckVolume>
+./warehouse_dispatcher <N_Trucks> <K_BeltCapacity> <M_MaxBeltWeight> <W_TruckWeight> <V_TruckVolume>
 ```
 
 **Example:**
 ```bash
-./warehouse_sim 3 10 500.0 100.0 50.0
+./warehouse_dispatcher 3 10 500.0 100.0 50.0
 ```
 
 **Interactive CLI Commands**
