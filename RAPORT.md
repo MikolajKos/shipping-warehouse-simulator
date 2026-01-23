@@ -72,6 +72,7 @@ ctest --output-on-failure
 cd build/tests
 ./test_trucks
 ```
+> **Uwaga:** Projekt był testowany bez ustawiania domyślnego opóźnienia SIM_DELAY_MS. Dla rzetelności wykonywanych testów polecam uruchamiać je bez tej opcji.
 
 ## 1. Założenia projektowe
 
@@ -179,6 +180,7 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
 * **i. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
 
 
