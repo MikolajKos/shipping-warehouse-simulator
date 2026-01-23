@@ -25,6 +25,39 @@ sudo apt update
 sudo apt install build-essential cmake git
 ```
 
+## Instrukcje budowania
+Poniżej znajduje się kompletna instrukcja zawierająca sekwencję instrukcji niezbędnych do budowy projektu.
+```bash
+cd build
+cmake ..
+cmake --build .
+```
+
+**Opcjonalnie:** Implementacja programu pozwala na ustawienie domyślnego opóźnienia pętli procesów w milisekundach, dla łatwiejszego odczytu logów
+```bash
+cd build
+cmake .. -DSIM_DELAY_MS=3000 # Ustawienie 3 sekund opóźnienia
+cmake --build .
+```
+
+## Uruchamianie projektu
+Symulacje można uruchomić z katalogu build/src. Należy podać odpowiednie argumenty uruchomieniowe:
+```bash
+cd build/src
+./warehouse_dispatcher <N_Trucks> <K_BeltCapacity> <M_MaxBeltWeight> <W_TruckWeight> <V_TruckVolume>
+```
+
+**Przykład:**
+```bash
+./warehouse_dispatcher 3 10 500 100 50
+```
+
+**Interaktywna obsługa komend**
+Po uruchomieniu program nasłuchuje komend na standardowym wejściu stdin:
+- 1: Force Departure - Sygnał ten zmusza ciężarówkę do natychmiastowego opuszczenia doku i dostarczenia przesyłek.
+- 2: Express Load - Obudzenie procesu pracownika ekspresowego, załadunek kilku paczek bezpośrednio do ciężarówki.
+- 3: Shutdown - Bezpieczne zamykanie symulacji, wszystkie procesy są zamykane a ciężarówki rozwożą ostatnie produkty.
+
 ## 1. Założenia projektowe
 
 Celem projektu było stworzenie symulacji działania magazynu firmy spedycyjnej w środowisku systemu Linux, wykorzystując mechanizmy programowania współbieżnego i komunikacji międzyprocesowej (IPC). Zgodnie z wymaganiami, unikano rozwiązań scentralizowanych na poziomie logiki biznesowej – każdy proces (Ciężarówka, Pracownik) jest osobnym procesem podejmującym autonomiczne decyzje w oparciu o stan pamięci dzielonej.
@@ -123,6 +156,7 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
 * **h. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
 
 
