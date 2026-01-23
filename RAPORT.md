@@ -1,4 +1,5 @@
 # Raport z projektu: Systemy Operacyjne
+[Dokumentacja Online](https://mkosiorek.pl/docs/warehouse_sim/files.html)
 
 **Autor:** Mikołaj Kosiorek\
 **Nr albumu:** 155281\
@@ -60,6 +61,17 @@ Po uruchomieniu program nasłuchuje komend na standardowym wejściu stdin:
 - 1: Force Departure - Sygnał ten zmusza ciężarówkę do natychmiastowego opuszczenia doku i dostarczenia przesyłek.
 - 2: Express Load - Obudzenie procesu pracownika ekspresowego, załadunek kilku paczek bezpośrednio do ciężarówki.
 - 3: Shutdown - Bezpieczne zamykanie symulacji, wszystkie procesy są zamykane a ciężarówki rozwożą ostatnie produkty.
+
+## Testowanie projektu
+
+Po zbudowaniu projektu w katalogu build możliwe jest przeprowadzenie testów jednostowych i integracyjnych
+```bash
+cd build
+ctest --output-on-failure
+# Dla lepszej wizualizacji testów można je wykonać również z katalogu tests
+cd build/tests
+./test_trucks
+```
 
 ## 1. Założenia projektowe
 
@@ -167,6 +179,7 @@ Poniżej znajdują się odnośniki do kluczowych fragmentów kodu realizujących
 * **i. Inne:**
     * [Możliwość zdefiniowania opóźnienia w celu obserwacji logów](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/CMakeLists.txt#L5-L8)
     * [Przykładowy fragment kolorowania wyjścia](https://github.com/MikolajKos/shipping-warehouse-simulator/blob/20851eee70aa8c65a77a145cc3c6a53e37b08bb6/src/worker_std.c#L91-L94)
+
 
 
 
